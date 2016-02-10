@@ -83,8 +83,11 @@ var GameTable = React.createClass({
     return (
       <div>
         <PlayersBox players={this._transformPlayers()} curr={this.props.gameInfo.curr}/>
+        <br/>
         <CardBox cards={this.props.gameInfo.penalty} players={this.props.gameInfo.players} box="penalty"/>
         <CardBox cards={this.props.gameInfo.center} players={this.props.gameInfo.players} box="center"/>
+        <ReadyButton myPlayerID={this.props.gameInfo.myPlayerID} roomID={this.props.gameInfo.roomID} />
+        <SitDownButton myPlayerID={this.props.gameInfo.myPlayerID} roomID={this.props.gameInfo.roomID} />
         <SelfBox player={this.props.gameInfo.players[this._findMyIndex()]} curr={this.props.gameInfo.curr}/>
       </div>
     );
@@ -117,7 +120,7 @@ var SinglePlayer = React.createClass({
       amICurr="";
       console.log("curr:",this.props.curr,"player:",this.props.player);
       if(this.props.curr===this.props.player.index) {
-        amICurr=" currPlayer";
+        amICurr=" blinking";
         console.log("Added curr status to:",this.props.player.name);
       }
     return (
@@ -165,11 +168,10 @@ var SingleRoom = React.createClass({
   render: function() {
     return (
       <div className={"singleRoom"} >
-        <GameTable gameInfo={this.props}/>
-        <ReadyButton myPlayerID={this.props.myPlayerID} roomID={this.props.roomID} />
-        <SitDownButton myPlayerID={this.props.myPlayerID} roomID={this.props.roomID} />
+        <GameTable gameInfo={this.props} />
         <Chat players={this.props.players} roomID={this.props.roomID} />
         <Rules />
+        <AIButton roomID={this.props.roomID} numPlayers={this.props.players.length} />
       </div>
     );
   }
@@ -233,21 +235,36 @@ var ClientUI = React.createClass({
   }
 })
 var RoomBox = React.createClass({
+  getInitialState: function() {
+    return ({open:false});
+  },
+  _toggleMenu: function() {
+    this.setState({open:!this.state.open});
+  },
+  _findMyRoomName: function() {
+    var z=0, foundRoom='Rooms List';
+    while (z<this.props.roomsList.length && foundRoom==='Rooms List'){
+      console.log("z:",z,"this.props.roomsList[z]:",this.props.roomsList[z]);
+      if (this.props.roomsList[z].id===this.props.myRoom && this.props.myRoom) foundRoom=this.props.roomsList[z].name;
+      z++;
+    }
+    return foundRoom;
+  },
   render: function(){
-    return (
-      <div className="roomBox mainTheme darkerNeutral">
-        <Room name={"New Room"} playerDisplay={""} isMyRoom={this.props.myRoom===undefined}/>
-        {
-          this.props.roomsList.map(function(room,i) {
-            return (
-              <div key={i}>
-              |<Room name={room.name} id={room.id} playerDisplay={room.numPlayers + "/4"} isMyRoom={this.props.myRoom===room.id} />
-              </div>
-            );
-          }.bind(this))
-        }
-      </div>
+    var allRooms=[];
+    allRooms.push(<Room name={"New Room"} playerDisplay={""} isMyRoom={this.props.myRoom===undefined} isOpen={this.state.open} key={-1}/>);
+    allRooms.push(this.props.roomsList.map(function(room,i) {
+      return(
+        <Room name={room.name} id={room.id} playerDisplay={room.numPlayers + "/4"} isMyRoom={this.props.myRoom===room.id} isOpen={this.state.open} key={i}/>
       );
+    }.bind(this))
+    );
+    return (
+      <div className="roomBox mainTheme darkerNeutral" onClick={this._toggleMenu} >
+        {this._findMyRoomName()}
+        {allRooms}
+      </div>
+    );
   }
 })
 var Room = React.createClass({
@@ -258,10 +275,11 @@ var Room = React.createClass({
   },
   render: function(){
     var addMyRoomClass="";
+    if (!this.props.isOpen) return (<div/>);
     if (this.props.isMyRoom) addMyRoomClass=" currRoom";
     return (
       <div className={"room mainTheme"+addMyRoomClass} onClick={this._sendRoomSelection}>
-        {this.props.name} {this.props.playerDisplay}
+        {this.props.name}   {this.props.playerDisplay}
       </div>
       );
   }
@@ -313,15 +331,18 @@ var Chat = React.createClass({
   },
   componentWillReceiveProps: function(nextProps) {
   //To empty the chat
-  //  console.log("Emptying chat:", this.state);
-  //  if (nextProps.roomID!==this.props.roomID) this.setState(this.getInitialState());
+    console.log("Emptying chat:", this.state);
+    if (nextProps.roomID!==this.props.roomID) {
+      var nextMessages=this.state.messages;
+      nextMessages.push(this.state.messages[0]);
+      this.setState({messages:nextMessages});
+    }
   },
   render: function() {
     var showMeClass='chat ';
     if (this.state.shown===false) showMeClass='chatHide ';
     return (
       <div className={showMeClass+"mainTheme theme"}>
-        <ChatHandle swapState={this._swapState} shown={this.state.shown}/>
         <div className={'messages'}>
           {
             this.state.messages.map(function(message,i) {
@@ -332,6 +353,7 @@ var Chat = React.createClass({
           }
         </div>
         <input id={"chatInput"} type={"text"} className={"chatInput mainTheme theme"} placeholder={"Trash talk goes here..."} onKeyPress={this._handleSubmit}/>
+        <ChatHandle swapState={this._swapState} shown={this.state.shown}/>
       </div>
     )
   }
@@ -437,6 +459,18 @@ var ReadyButton = React.createClass({
         )
     }
     return <div/>
+  }
+});
+var AIButton = React.createClass({
+  _sendAIRequest: function() {
+    console.log("Requesting an AI player");
+    socket.emit('addAI', {roomID:this.props.roomID});
+  },
+  render: function() {
+    if (this.props.numPlayers>1) return (<div />);
+    return (
+      <div onClick={this._sendAIRequest} className='light'>ADD AI</div>
+      );
   }
 });
 var Rules = React.createClass({

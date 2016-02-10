@@ -5,18 +5,15 @@ html {
   background-attachment: fixed;
   background-position: center;
 }
-
 body {
   overflow: hidden;
 }
-
 h1 {
   color: white;
   text-align: center;
   font-family: Verdana;
   font-size: 18pt;
 }
-
 .mainTheme {
   border-style: solid;
   border-width: 2px;
@@ -51,26 +48,23 @@ h1 {
   background-color: #9F67AA;
 }
 .roomBox {
-  width: 100%;
+  width: 130px;
   display: flex;
-  justify-content: flex-start;
-  opacity: .8;
+  flex-direction: column;
+  opacity: 1;
   border-color: #39B3C1;
-  align-items: center;
+  font-size: 13pt;
+  align-self: flex-start;
 }
 
 .room {
   display: inline-block;
-  font-size: 13pt;
+  justify-content: center;
   opacity:1;
   border: none;
   color: white;
 	text-decoration: none;
 	text-shadow: none;
-	-webkit-transition: 500ms linear 0s;
-	-moz-transition: 500ms linear 0s;
-	-o-transition: 500ms linear 0s;
-	transition: 500ms linear 0s;
 	outline: 0 none;
 	margin: 1px;
 	border-color: transparent;
@@ -86,13 +80,17 @@ h1 {
   border-width: 2px;
 }
 
-.room:hover, room:focus
+.roomBox:hover, .room:hover, room:focus
 {
+  -webkit-transition: 500ms linear 0s;
+	-moz-transition: 500ms linear 0s;
+	-o-transition: 500ms linear 0s;
+	transition: 500ms linear 0s;
   border-color: #B2D0CD;
   border-style: solid;
   border-width: 2px;
 	color: white;
-	text-shadow: 0px 0px 3px #B2D0CD;
+	text-shadow: 0 0 3px #B2D0CD;
 }
 
 .singleRoom{
@@ -101,6 +99,8 @@ h1 {
 
 .PlayersBox {
   display: flex;
+  align-items: flex-start;
+  align-self: flex-start;
 }
 
 .singlePlayer {
@@ -134,7 +134,7 @@ h1 {
   color: white;
 }
 
-.currPlayer {
+.blinking {
   border-color: #FFCC00;
   -webkit-animation-name: currPulse;
   -webkit-animation-duration: .8s;
@@ -196,7 +196,7 @@ h1 {
   transition-duration: .75s;
   transition-timing-function: ease-out;
   width: 315px;
-  height: 70%;
+  height: 62%;
   bottom: 10%;
   right: 5px;
   border-color:#486260;
@@ -218,7 +218,7 @@ h1 {
 .chatHandle {
   position: relative;
   left: -32px;
-  bottom: -50%;
+  top: -50%;
   width: 30px;
   cursor:pointer;
 }
@@ -254,13 +254,14 @@ h1 {
 
 .rulesIcon {
   position: absolute;
-  bottom: 5%;
-  right: 3%;
+  top: 7px;
+  left: 7px;
+  background-color: #39B3C1;
   background-image: url("./assets/rules.png");
   background-size: contain;
   background-repeat: no-repeat;
-  width: 6%;
-  height: 6%;
+  height: 40px;
+  width: 40px;
 }
 
 .rulesIcon:hover {
@@ -277,7 +278,7 @@ h1 {
   width:36%;
   height:70%;
   top:25%;
-  right: 7px;
+  left: 7px;
   overflow-y: scroll;
   text-align: left;
   color: #B2D0CD;
