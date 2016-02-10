@@ -268,7 +268,7 @@ var Room = React.createClass({
 })
 var Chat = React.createClass({
   getInitialState: function() {
-    return {messages:[{source:'', color:'gray', message:'Chat for game room initialized.', isChat:false}]};
+    return {shown:true, messages:[{source:'', color:'gray', message:"You've entered a new game room.", isChat:false}]};
   },
   componentDidMount: function() {
     socket.on('message', this._handleMessage);
@@ -303,18 +303,25 @@ var Chat = React.createClass({
       }
     }
   },
+  _swapState: function(){
+    console.log("Swapping state of chat");
+    this.setState({shown:!this.state.shown});
+  },
   componentDidUpdate: function() {
     var boxToScroll = $('.messages');
     boxToScroll.scrollTop(boxToScroll.prop('scrollHeight'));
   },
   componentWillReceiveProps: function(nextProps) {
   //To empty the chat
-    console.log("Emptying chat:", this.state);
-    if (nextProps.roomID!==this.props.roomID) this.setState(this.getInitialState());
+  //  console.log("Emptying chat:", this.state);
+  //  if (nextProps.roomID!==this.props.roomID) this.setState(this.getInitialState());
   },
   render: function() {
+    var showMeClass='chat ';
+    if (this.state.shown===false) showMeClass='chatHide ';
     return (
-      <div className={"chat mainTheme theme"}>
+      <div className={showMeClass+"mainTheme theme"}>
+        <ChatHandle swapState={this._swapState} shown={this.state.shown}/>
         <div className={'messages'}>
           {
             this.state.messages.map(function(message,i) {
@@ -329,6 +336,15 @@ var Chat = React.createClass({
     )
   }
 });
+var ChatHandle = React.createClass({
+  render: function() {
+    var arrows=">>";
+    if (this.props.shown===false) arrows="<<";
+    return (
+      <div className='chatHandle light' onClick={this.props.swapState}>{arrows}</div>
+      );
+  }
+})
 var Message = React.createClass({
   render: function(){
     var msgStyle = {

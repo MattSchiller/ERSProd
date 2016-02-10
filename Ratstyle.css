@@ -76,6 +76,7 @@ h1 {
 	border-color: transparent;
   border-style:solid;
   border-width: 2px;
+  cursor:pointer;
 }
 
 .currRoom {
@@ -191,11 +192,35 @@ h1 {
 
 .chat {
   position: absolute;
-  width: 37%;
-  height: 30%;
-  bottom: 50px;
-  left: 7px;
+  transition-property: right, overflow;
+  transition-duration: .75s;
+  transition-timing-function: ease-out;
+  width: 315px;
+  height: 70%;
+  bottom: 10%;
+  right: 5px;
   border-color:#486260;
+}
+
+.chatHide {
+  position: absolute;
+  transition-property: right, overflow;
+  transition-duration: .5s;
+  transition-timing-function: ease-out;
+  width: 315px;
+  height: 70%;
+  bottom: 10%;
+  right: -320px;
+  overflow-y:none;
+  border-color:#486260;
+}
+
+.chatHandle {
+  position: relative;
+  left: -32px;
+  bottom: -50%;
+  width: 30px;
+  cursor:pointer;
 }
 
 .messages {

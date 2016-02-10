@@ -236,7 +236,7 @@ RS.prototype.convertAce=function(card){
     return 1;
   } else {return card;}
 };
-RS.prototype.checkFlush=function(card1, card2, card3){return (this.getSuit(card1)===this.getSuit(card2) && this.getSuit(card2)===gthis.etSuit(card3));};
+RS.prototype.checkFlush=function(card1, card2, card3){return (this.getSuit(card1)===this.getSuit(card2) && this.getSuit(card2)===this.getSuit(card3));};
 RS.prototype.faceValue=function(card){if (this.getRank(card)>10){return this.getRank(card)-10;} else {return false;}};
 RS.prototype.checkStraight=function(card1, card2, card3){
   card1 = this.getRank(card1); card2 = this.getRank(card2); card3 = this.getRank(card3);
