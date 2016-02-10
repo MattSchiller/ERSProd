@@ -171,9 +171,9 @@ var SingleRoom = React.createClass({
         <GameTable gameInfo={this.props} />
         <Chat players={this.props.players} roomID={this.props.roomID} />
         <Rules />
-        <AIButton roomID={this.props.roomID} numPlayers={this.props.players.length} />
+        
       </div>
-    );
+    );//<AIButton roomID={this.props.roomID} numPlayers={this.props.players.length} />
   }
 });
 var ClientUI = React.createClass({
