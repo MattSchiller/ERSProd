@@ -2,7 +2,7 @@ var http = require("http"),
     url = require('url'),
     fs = require('fs'),
     io = require('socket.io'),
-    RatscrewLogic = require('./src_server/RatscrewLogic.js');
+    RatscrewLogic = require('./scripts/RatscrewLogic.js');
 
 var serverName = 'SERVER';
 var server = http.createServer(function(request, response){
@@ -14,21 +14,19 @@ var server = http.createServer(function(request, response){
     case '/index.html':
       response.writeHead(200, {"Content-Type": "text/html"});
       path='/index.html';break;
-    case '/src/scripts/Ratscrew.js':
+    case '/scripts/Ratscrew.js':
     case '/socket.io/socket.io.js':
-    case "/src/scripts/Suits.js":
-    case "/build/scripts/bundle.js":
+    case "/scripts/Suits.js":
       response.writeHead(200, {"Content-Type": "application/javascript"}); break;
-    case '/src/styles/Ratstyle.css':
-    case '/build/styles/styles.css':
+    case '/Ratstyle.css':
       response.writeHead(200, {"Content-Type": "text/css"}); break;
-    case '/src/assets/woodgrain.jpg':
-    case '/src/assets/rules.png':
-    case '/src/assets/rulesHover.png':
-    case '/src/assets/rules2.png':
-    case '/src/assets/rules2-hover.png':
-    case '/src/assets/cardPixels.png':
-    case '/src/assets/starfield.jpg':
+    case '/assets/woodgrain.jpg':
+    case '/assets/rules.png':
+    case '/assets/rulesHover.png':
+    case '/assets/rules2.png':
+    case '/assets/rules2-hover.png':
+    case '/assets/cardPixels.png':
+    case '/assets/starfield.jpg':
       response.writeHead(200, {'Content-Type': 'image/gif' }); break;
     default:
       response.writeHead(404);
@@ -74,9 +72,6 @@ function emitMessage(socket, ios, mRI, message, isChat){
   if (socket===serverName) {
     source = serverName;
     index = "purple";
-  } else if (socket==="AI") {
-    source = gameRooms[mRI].gL.getName(socket);
-    index = gameRooms[mRI].gL.findIndex(socket);
   } else if (gameRooms[mRI].gL.findIndex(socket)===false) {
     source = 'Anonymous';
     index = 'gray';
@@ -107,10 +102,10 @@ function sendButtonStatus(socket, ios, mRI, disabled){
 }
 function sendID(socket, mRI){
   myID = gameRooms[mRI].gL.getID(socket);
-  /*if (myID===false) {
+  if (myID===false) {
     console.log("Could not send player ID");
     return;
-  }*/
+  }
   console.log("Sending user ID:",myID);
   socket.emit("id",{id:myID});
 }
@@ -267,18 +262,9 @@ ios.sockets.on('connection', function(socket){
     sendButtonStatus(socket, ios, mRI, !gameRooms[mRI].gL.readyForReady());
     sendRoomsList(socket, ios, true);
   });
-  socket.on('standUp', function(data){
-    var mRI=findRoomIndex(data.roomID)
-    if (mRI===false) {console.log("There was a problem in finding the roomID specified (standUp)"); return;}
-    console.log("Username",data.name,"attempted to add to remove from roster");
-    emitMessage(socket, ios, mRI, "has stood up from the game table.");
-    gameRooms[mRI].gL.resetPlayer(socket);
-    sendButtonStatus(socket, ios, mRI, true);
-    sendGameState(socket, ios, mRI, true);
-    sendID(socket, mRI);
-  });
   socket.on('addAI', function(data){
-    var mRI=findRoomIndex(data.roomID);
+    var mRI;
+    mRI=findRoomIndex(data.roomID);
     if (mRI===false) {console.log("There was a problem in finding the roomID specified (addAI)"); return;}
     console.log("Received AI request from:",gameRooms[mRI].gL.getName(socket));
     sitDown(null, ios, mRI, 'AI-Player');
@@ -309,7 +295,6 @@ ios.sockets.on('connection', function(socket){
     flipResult = gameRooms[mRI].gL.flip(socket);
     if (flipResult.msg==="") return;                                                    //To ignore spamming when it's not the player's turn
     emitMessage(socket, ios, mRI, flipResult.msg, false);
-    sendGameState(socket, ios, mRI, true);
     if (flipResult.clear) serverClear(flipResult.clearPlayer, ios, mRI, 'Flip');
     else {
       sendGameState(socket, ios, mRI, true);
@@ -358,11 +343,8 @@ function serverClear(socket, ios, mRI, clearType){
 
 function checkForAI(ios, mRI){
   var thisAITurn=gameRooms[mRI].gL.handleAITurn(function(aiTurnResults) {
-    var messagePlyr;
     if (aiTurnResults.action.clear) serverClear(aiTurnResults.action.clearPlayer, ios, mRI, 'Flip');
-    if (aiTurnResults.clearPlayer===false) messagePlyr="AI";
-    else messagePlyr=aiTurnResults.clearPlayer;
-    emitMessage(messagePlyr, ios, mRI, aiTurnResults.action.msg, false);
+    emitMessage(aiTurnResults.clearPlayer, ios, mRI, aiTurnResults.action.msg, false);
     sendGameState(null, ios, mRI, true);
   });
   if (thisAITurn.check) {               //It's the AI's turn and they did something
