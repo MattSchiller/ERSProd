@@ -110,15 +110,12 @@ RS.prototype.nextPlayer=function(){
 RS.prototype.handleAITurn=function(callBack){
   var that=this;
   if (!this.winner && this.players[this.currPlayer].socket===null) {      //It's AI's turn
-//    setTimeout(function(){
       callBack({
         check: true,
         action: that.flip(null)
       });
       return {check:true};
-//    }, 1200);
   } else return {check: false};
-  
 };
 RS.prototype.nextGoodID=function(){
   for(var z=0;z<this.availableIDs.length;z++){
@@ -229,11 +226,10 @@ RS.prototype.slap=function(socket){
     }
   }
   if (slapSuccess===false) {
-    if (this.players[num].cards!==0) {
     console.log("Slap, but nothing found. Initiating penalty");
     this.checkWinner();
     return ({success:slapSuccess, msg:this.doPenalty(num)});
-    } else {
+  } else {
       this.slapIntrusion=true;                                               //Will block a face clear
       this.flipLock=true;
       console.log("Slap successful on", slapReason);
@@ -241,7 +237,6 @@ RS.prototype.slap=function(socket){
       this.faceOff=false;
       this.checkWinner();
       return {success:slapSuccess, msg:"slaps and finds a "+slapReason+"!"};
-    }
   }
 };
 

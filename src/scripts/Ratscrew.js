@@ -89,7 +89,7 @@ var GameTable = React.createClass({
         <CardBox cards={this.props.gameInfo.center} players={this.props.gameInfo.players} box="center"/>
         <ReadyButton myPlayerID={this.props.gameInfo.myPlayerID} roomID={this.props.gameInfo.roomID} />
         <SitDownButton myPlayerID={this.props.gameInfo.myPlayerID} roomID={this.props.gameInfo.roomID} />
-        <SelfBox player={this.props.gameInfo.players[this._findMyIndex()]} curr={this.props.gameInfo.curr}/>
+        <SelfBox player={this.props.gameInfo.players[this._findMyIndex()]} curr={this.props.gameInfo.curr} roomID={this.props.gameInfo.roomID} numPlayers={this.props.gameInfo.players.length}/>
       </div>
     );
   }
@@ -125,7 +125,7 @@ var SinglePlayer = React.createClass({
         console.log("Added curr status to:",this.props.player.name);
       }
     return (
-      <div className={this.props.className+' singlePlayer mainTheme theme'+amICurr}>
+      <div className={this.props.className+' singlePlayer mainTheme'+amICurr}>
         <span style={spanStyle}>{this.props.player.name}</span>
         <br/> <span><b>Cards: </b></span><span style={{fontSize:"15pt"}}><b>{this.props.player.cards}</b></span>
       </div>
@@ -136,7 +136,11 @@ var SelfBox = React.createClass({
   render: function() {
     if (this.props.player===undefined) return <div />;
     return (
-      <SinglePlayer player={this.props.player} curr={this.props.curr} className={'self theme mainTheme'}/>
+      <div className='self'>
+        <SinglePlayer player={this.props.player} curr={this.props.curr} className={'mainTheme'}/>
+        <StandUpButton roomID={this.props.roomID} />
+        <AIButton roomID={this.props.roomID} numPlayers={this.props.numPlayers} />
+      </div>
       )
   }
 });
@@ -172,9 +176,8 @@ var SingleRoom = React.createClass({
         <GameTable gameInfo={this.props} />
         <Chat players={this.props.players} roomID={this.props.roomID} />
         <Rules />
-        
       </div>
-    );//<AIButton roomID={this.props.roomID} numPlayers={this.props.players.length} />
+    );//
   }
 });
 var ClientUI = React.createClass({
@@ -245,7 +248,7 @@ var RoomBox = React.createClass({
   _findMyRoomName: function() {
     var z=0, foundRoom='Rooms List';
     while (z<this.props.roomsList.length && foundRoom==='Rooms List'){
-      console.log("z:",z,"this.props.roomsList[z]:",this.props.roomsList[z]);
+      //console.log("z:",z,"this.props.roomsList[z]:",this.props.roomsList[z]);
       if (this.props.roomsList[z].id===this.props.myRoom && this.props.myRoom) foundRoom=this.props.roomsList[z].name;
       z++;
     }
@@ -332,7 +335,7 @@ var Chat = React.createClass({
   },
   componentWillReceiveProps: function(nextProps) {
   //To empty the chat
-    console.log("Emptying chat:", this.state);
+    //console.log("Emptying chat:", this.state);
     if (nextProps.roomID!==this.props.roomID) {
       var nextMessages=this.state.messages;
       nextMessages.push(this.state.messages[0]);
@@ -343,7 +346,7 @@ var Chat = React.createClass({
     var showMeClass='chat ';
     if (this.state.shown===false) showMeClass='chatHide ';
     return (
-      <div className={showMeClass+"mainTheme theme"}>
+      <div className={showMeClass+"mainTheme"}>
         <div className={'messages'}>
           {
             this.state.messages.map(function(message,i) {
@@ -353,7 +356,7 @@ var Chat = React.createClass({
             })
           }
         </div>
-        <input id={"chatInput"} type={"text"} className={"chatInput mainTheme theme"} placeholder={"Trash talk goes here..."} onKeyPress={this._handleSubmit}/>
+        <input id={"chatInput"} type={"text"} className={"chatInput mainTheme"} placeholder={"Trash talk goes here..."} onKeyPress={this._handleSubmit}/>
         <ChatHandle swapState={this._swapState} shown={this.state.shown}/>
       </div>
     )
@@ -424,6 +427,17 @@ var SitDownButton = React.createClass({
     } else return <div ref="nameInput"/>;
   }
 });
+var StandUpButton = React.createClass({
+  _sendStandUp: function() {
+    console.log("Sending stand up notice");
+    socket.emit('standUp', {roomID: this.props.roomID});
+  },
+  render: function() {
+    return (
+      <div onClick={this._sendStandUp} className="mainTheme standUp">[LEAVE GAME]</div>
+      );
+  }
+});
 var ReadyButton = React.createClass({
   getInitialState: function() {
     return {disabled:true,
@@ -470,7 +484,7 @@ var AIButton = React.createClass({
   render: function() {
     if (this.props.numPlayers>1) return (<div />);
     return (
-      <div onClick={this._sendAIRequest} className='light'>ADD AI</div>
+      <div onClick={this._sendAIRequest} className='light AI'>ADD AI</div>
       );
   }
 });
@@ -559,7 +573,7 @@ var RulesModal = React.createClass({
       }
       bottomstack.pop();
       return (
-        <div className={'rulesModal mainTheme theme'} onClick={this.props.hide} onBlur={this.props.hide}>
+        <div className={'rulesModal mainTheme'} onClick={this.props.hide} onBlur={this.props.hide}>
           <span style={{fontSize:"17pt"}}><u><b>Rules of Egyptian Ratscrew:</b></u></span>
           <ul>
             <li>The point of the game is to get all the cards. Players have two actions: flip <b>[TAB]</b> and slap <b>[SPACEBAR]</b>.

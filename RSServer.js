@@ -74,6 +74,9 @@ function emitMessage(socket, ios, mRI, message, isChat){
   if (socket===serverName) {
     source = serverName;
     index = "purple";
+  } else if (socket==="AI") {
+    source = gameRooms[mRI].gL.getName(socket);
+    index = gameRooms[mRI].gL.findIndex(socket);
   } else if (gameRooms[mRI].gL.findIndex(socket)===false) {
     source = 'Anonymous';
     index = 'gray';
@@ -104,10 +107,10 @@ function sendButtonStatus(socket, ios, mRI, disabled){
 }
 function sendID(socket, mRI){
   myID = gameRooms[mRI].gL.getID(socket);
-  if (myID===false) {
+  /*if (myID===false) {
     console.log("Could not send player ID");
     return;
-  }
+  }*/
   console.log("Sending user ID:",myID);
   socket.emit("id",{id:myID});
 }
@@ -264,9 +267,18 @@ ios.sockets.on('connection', function(socket){
     sendButtonStatus(socket, ios, mRI, !gameRooms[mRI].gL.readyForReady());
     sendRoomsList(socket, ios, true);
   });
+  socket.on('standUp', function(data){
+    var mRI=findRoomIndex(data.roomID)
+    if (mRI===false) {console.log("There was a problem in finding the roomID specified (standUp)"); return;}
+    console.log("Username",data.name,"attempted to add to remove from roster");
+    emitMessage(socket, ios, mRI, "has stood up from the game table.");
+    gameRooms[mRI].gL.resetPlayer(socket);
+    sendButtonStatus(socket, ios, mRI, true);
+    sendGameState(socket, ios, mRI, true);
+    sendID(socket, mRI);
+  });
   socket.on('addAI', function(data){
-    var mRI;
-    mRI=findRoomIndex(data.roomID);
+    var mRI=findRoomIndex(data.roomID);
     if (mRI===false) {console.log("There was a problem in finding the roomID specified (addAI)"); return;}
     console.log("Received AI request from:",gameRooms[mRI].gL.getName(socket));
     sitDown(null, ios, mRI, 'AI-Player');
@@ -345,8 +357,11 @@ function serverClear(socket, ios, mRI, clearType){
 
 function checkForAI(ios, mRI){
   var thisAITurn=gameRooms[mRI].gL.handleAITurn(function(aiTurnResults) {
+    var messagePlyr;
     if (aiTurnResults.action.clear) serverClear(aiTurnResults.action.clearPlayer, ios, mRI, 'Flip');
-    emitMessage(aiTurnResults.clearPlayer, ios, mRI, aiTurnResults.action.msg, false);
+    if (aiTurnResults.clearPlayer===false) messagePlyr="AI";
+    else messagePlyr=aiTurnResults.clearPlayer;
+    emitMessage(messagePlyr, ios, mRI, aiTurnResults.action.msg, false);
     sendGameState(null, ios, mRI, true);
   });
   if (thisAITurn.check) {               //It's the AI's turn and they did something

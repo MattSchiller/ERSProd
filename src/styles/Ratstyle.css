@@ -58,6 +58,7 @@ h1 {
   border-color: #39B3C1;
   font-size: 13pt;
   align-self: flex-start;
+  cursor:pointer;
 }
 
 .room {
@@ -121,20 +122,36 @@ h1 {
   position: absolute;
   text-align: center;
   width: 200px;
-  max-width: 20%;
   height: 50px;
   bottom: 30%;
   left: 50%;
   transform: translate(-50%, 0%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
-.sitDown {
+.sitDown, .standUp {
   color: #486260;
   font-size: 15px;
 }
 
+.standUp {
+  color: #B2D0CD;
+  background-color: #7C9B4C;
+  cursor:pointer;
+  width: 115px;
+  border-radius: 2px;
+}
+
 .sitDown::input-placeholder {
   color: white;
+}
+
+.AI {
+  width: 100px;
+  border-color: #FFCC00;
+  cursor:pointer;
 }
 
 .blinking {
@@ -186,6 +203,7 @@ h1 {
   max-height: 45px;
   z-index: 100;
   margin: 0 auto;
+  cursor:pointer;
 }
 
 .notReady {
@@ -199,7 +217,7 @@ h1 {
   transition-duration: .75s;
   transition-timing-function: ease-out;
   width: 315px;
-  height: 62%;
+  height: 64%;
   bottom: 10%;
   right: 5px;
   border-color:#486260;
