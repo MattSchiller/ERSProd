@@ -2,7 +2,7 @@ var http = require("http"),
     url = require('url'),
     fs = require('fs'),
     io = require('socket.io'),
-    RatscrewLogic = require('./scripts/RatscrewLogic.js');
+    RatscrewLogic = require('./src_server/RatscrewLogic.js');
 
 var serverName = 'SERVER';
 var server = http.createServer(function(request, response){
@@ -14,19 +14,21 @@ var server = http.createServer(function(request, response){
     case '/index.html':
       response.writeHead(200, {"Content-Type": "text/html"});
       path='/index.html';break;
-    case '/scripts/Ratscrew.js':
+    case '/src/scripts/Ratscrew.js':
     case '/socket.io/socket.io.js':
-    case "/scripts/Suits.js":
+    case "/src/scripts/Suits.js":
+    case "/build/scripts/bundle.js":
       response.writeHead(200, {"Content-Type": "application/javascript"}); break;
-    case '/Ratstyle.css':
+    case '/src/styles/Ratstyle.css':
+    case '/build/styles/styles.css':
       response.writeHead(200, {"Content-Type": "text/css"}); break;
-    case '/assets/woodgrain.jpg':
-    case '/assets/rules.png':
-    case '/assets/rulesHover.png':
-    case '/assets/rules2.png':
-    case '/assets/rules2-hover.png':
-    case '/assets/cardPixels.png':
-    case '/assets/starfield.jpg':
+    case '/src/assets/woodgrain.jpg':
+    case '/src/assets/rules.png':
+    case '/src/assets/rulesHover.png':
+    case '/src/assets/rules2.png':
+    case '/src/assets/rules2-hover.png':
+    case '/src/assets/cardPixels.png':
+    case '/src/assets/starfield.jpg':
       response.writeHead(200, {'Content-Type': 'image/gif' }); break;
     default:
       response.writeHead(404);

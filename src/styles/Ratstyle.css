@@ -1,0 +1,288 @@
+html {
+  background: url("/src/assets/starfield.jpg");
+  background-size: 100%;
+  border-style: none;
+  background-attachment: fixed;
+  background-position: center;
+}
+body {
+  overflow: hidden;
+}
+h1 {
+  color: white;
+  text-align: center;
+  font-family: Verdana;
+  font-size: 18pt;
+}
+.mainTheme {
+  border-style: solid;
+  border-width: 2px;
+  border-radius: 2px;
+  font-family: Verdana;
+}
+.superLight {
+  background-color: #B2D0CD;
+}
+.light {
+  background-color: #39B3C1;
+}
+.neutral {
+  background-color: #2D758F;
+}
+.darkNeutral {
+  background-color: #486260;
+}
+.darkerNeutral{
+  background-color: #1E3946;
+}
+.activeOne {
+  background-color: #7C9B4C;
+}
+.activeTwo {
+  background-color: #E68A00;
+}
+.playerOne{
+  background-color: #1A4739;
+}
+.playerTwo{
+  background-color: #9F67AA;
+}
+.roomBox {
+  position: absolute;
+  left: 70px;
+  top: 45px;
+  width: 130px;
+  display: flex;
+  flex-direction: column;
+  opacity: 1;
+  border-color: #39B3C1;
+  font-size: 13pt;
+  align-self: flex-start;
+}
+
+.room {
+  display: inline-block;
+  justify-content: center;
+  opacity:1;
+  border: none;
+  color: white;
+	text-decoration: none;
+	text-shadow: none;
+	outline: 0 none;
+	margin: 1px;
+	border-color: transparent;
+  border-style:solid;
+  border-width: 2px;
+  cursor:pointer;
+}
+
+.currRoom {
+  background-color: #7C9B4C;
+  border-color: #B2D0CD;
+  border-style: solid;
+  border-width: 2px;
+}
+
+.roomBox:hover, .room:hover, room:focus
+{
+  -webkit-transition: 500ms linear 0s;
+	-moz-transition: 500ms linear 0s;
+	-o-transition: 500ms linear 0s;
+	transition: 500ms linear 0s;
+  border-color: #B2D0CD;
+  border-style: solid;
+  border-width: 2px;
+	color: white;
+	text-shadow: 0 0 3px #B2D0CD;
+}
+
+.singleRoom{
+  text-align: center;
+}
+
+.PlayersBox {
+  display: flex;
+  align-items: flex-start;
+  align-self: flex-start;
+}
+
+.singlePlayer {
+  text-align: center;
+  width: 20%px;
+  min-width: 200px;
+  height: 100%;
+  margin: auto;
+  display: inline-block;
+  color: #B2D0CD;
+  padding: 2px;
+}
+
+.self {
+  position: absolute;
+  text-align: center;
+  width: 200px;
+  max-width: 20%;
+  height: 50px;
+  bottom: 30%;
+  left: 50%;
+  transform: translate(-50%, 0%);
+}
+
+.sitDown {
+  color: #486260;
+  font-size: 15px;
+}
+
+.sitDown::input-placeholder {
+  color: white;
+}
+
+.blinking {
+  border-color: #FFCC00;
+  -webkit-animation-name: currPulse;
+  -webkit-animation-duration: .8s;
+  -webkit-animation-iteration-count: infinite;
+  -moz-animation-name: currPulse;
+  -moz-animation-duration: .8s;
+  -moz-animation-iteration-count: infinite;
+  -webkit-animation-direction: alternate;
+  -moz-animation-direction: alternate;
+}
+
+@-webkit-keyframes currPulse {
+  from {
+    -webkit-box-shadow: inset 0 0 8px 4px #FFCC00;
+    -moz-box-shadow: inset 0 0 8px 4px #FFCC00;
+    box-shadow: inset 0 0 8px 4px #FFCC00;}
+  to {
+    -webkit-box-shadow: inset 0 0 3px .5px #FFCC00;
+    -moz-box-shadow: inset 0 0 3px .5px #FFCC00;
+    box-shadow: inset 0 0 3px .5px #FFCC00;}
+}
+
+
+
+.centerCards {
+  text-align: center;
+  position:relative;
+  top:5px;
+  height: 80px;
+}
+.penaltyCards {
+  text-align: center;
+  position: relative;
+  top:10px;
+  height: 60px;
+}
+
+*::-webkit-input-placeholder {color: black;}
+*:-moz-placeholder {/* FF 4-18 */color: black;}
+*::-moz-placeholder {/* FF 19+ */color: black;}
+*:-ms-input-placeholder {/* IE 10+ */color: black;}
+
+.readyButton {
+  width: 15%;
+  height: 10%;
+  max-height: 45px;
+  z-index: 100;
+  margin: 0 auto;
+}
+
+.notReady {
+  background-color: #600000;
+  color: white;
+}
+
+.chat {
+  position: absolute;
+  transition-property: right, overflow;
+  transition-duration: .75s;
+  transition-timing-function: ease-out;
+  width: 315px;
+  height: 62%;
+  bottom: 10%;
+  right: 5px;
+  border-color:#486260;
+}
+
+.chatHide {
+  position: absolute;
+  transition-property: right, overflow;
+  transition-duration: .5s;
+  transition-timing-function: ease-out;
+  width: 315px;
+  height: 62%;
+  bottom: 10%;
+  right: -320px;
+  overflow-y:none;
+  border-color:#486260;
+}
+
+.chatHandle {
+  position: relative;
+  left: -32px;
+  top: -50%;
+  width: 30px;
+  cursor:pointer;
+}
+
+.messages {
+  overflow: auto;
+  height:100%;
+  word-wrap:break-word;
+}
+
+.message {
+  text-align: left;
+  color: #B2D0CD;
+}
+
+.sysMsg {
+  text-indent: 3%;
+}
+
+.chatInput {
+  position: absolute;
+  background-color: gray;
+  text-indent: 1%;
+  bottom: -24px;
+  width: 100%;
+  right: -2px;
+  border-color: #486260;
+}
+
+.chatInput:focus {
+  background-color:#E68A00;
+}
+
+.rulesIcon {
+  position: absolute;
+  top: 7px;
+  left: 7px;
+  background-color: #39B3C1;
+  background-image: url("/src/assets/rules.png");
+  background-size: contain;
+  background-repeat: no-repeat;
+  height: 40px;
+  width: 40px;
+}
+
+.rulesIcon:hover {
+  outline: none;
+  border-color: #9ecaed;
+  box-shadow: 0 0 10px #9ecaed;
+  /*background-image: url("/src/assets/rulesHover.png");*/
+}
+
+.rulesModal {
+  position: absolute;
+  opacity: 1;
+  transition: opacity 1s;
+  width:36%;
+  height:70%;
+  top:25%;
+  left: 7px;
+  overflow-y: scroll;
+  text-align: left;
+  color: #B2D0CD;
+}
