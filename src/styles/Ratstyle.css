@@ -229,7 +229,7 @@ h1 {
   transition-duration: .5s;
   transition-timing-function: ease-out;
   width: 315px;
-  height: 62%;
+  height: 64%;
   bottom: 10%;
   right: -320px;
   overflow-y:none;
@@ -276,7 +276,7 @@ h1 {
 .rulesIcon {
   position: absolute;
   top: 7px;
-  left: 7px;
+  right: 7px;
   background-color: #39B3C1;
   background-image: url("/src/assets/rules.png");
   background-size: contain;

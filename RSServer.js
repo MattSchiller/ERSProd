@@ -74,9 +74,6 @@ function emitMessage(socket, ios, mRI, message, isChat){
   if (socket===serverName) {
     source = serverName;
     index = "purple";
-  } else if (socket==="AI") {
-    source = gameRooms[mRI].gL.getName(socket);
-    index = gameRooms[mRI].gL.findIndex(socket);
   } else if (gameRooms[mRI].gL.findIndex(socket)===false) {
     source = 'Anonymous';
     index = 'gray';
