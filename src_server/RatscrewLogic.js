@@ -1,11 +1,11 @@
 function ServerPlayer(socket, name, id, color) {
-    this.socket = socket;
-    this.name = name;
-    this.cards = [];
-    this.color = color;
-    this.id = id;
-    this.ready=false;
-  }
+  this.socket = socket;
+  this.name = name;
+  this.cards = [];
+  this.color = color;
+  this.id = id;
+  this.ready=false;
+}
 ServerPlayer.prototype.flip = function(){
   if (this.cards.length > 0){return this.cards.shift();
     } else {return null;}
@@ -77,6 +77,15 @@ function RS () {
   this.gameRunning=undefined;
   this.prepRatscrew();
   this.AI = require('./AI.js');
+  this.myBots = [];
+  this.colors = ['#4d79ff', '#00cc00', '#cc00ca','#ffcc00'];
+  this.rules = {
+    doubles:true,
+    sandwich:true,
+    flush:true,
+    straight:true,
+    bottomStack:true
+  };
 }
 
 RS.prototype.checkWinner=function(){
@@ -106,16 +115,6 @@ RS.prototype.nextPlayer=function(){
     else {break;}
   } while (originalPlayer!==this.currPlayer);
   this.checkWinner();
-};
-RS.prototype.handleAITurn=function(callBack){
-  var that=this;
-  if (!this.winner && this.players[this.currPlayer].socket===null) {      //It's AI's turn
-      callBack({
-        check: true,
-        action: that.flip(null)
-      });
-      return {check:true};
-  } else return {check: false};
 };
 RS.prototype.nextGoodID=function(){
   for(var z=0;z<this.availableIDs.length;z++){
@@ -190,7 +189,6 @@ RS.prototype.flip=function(socket){
 };
 RS.prototype.slap=function(socket){
   var len = this.centerPile.length; slapSuccess=false, slapReason="",
-      useDoubles = useSandwich = useFlush = useStraight = useBottomStack = true,
       num = this.findIndex(socket);
   if (!this.gameRunning) return {success:slapSuccess, msg:""};
   if (len===0){                                                       //probably a lag mistake
@@ -205,21 +203,21 @@ RS.prototype.slap=function(socket){
   } else {
     var top = this.centerPile[len-1].card;
     var second = this.centerPile[len-2].card;
-    if (useDoubles && this.getRank(top)==this.getRank(second)){                 //doubles
+    if (this.rules.doubles && this.getRank(top)==this.getRank(second)){                 //doubles
       slapReason="double";
       slapSuccess=true;
     } else if (len > 2) {//can have triplet rules
       var third = this.centerPile[len-3].card;
-      if (useSandwich && this.getRank(top)==this.getRank(third)){               //sandwich
+      if (this.rules.sandwich && this.getRank(top)==this.getRank(third)){               //sandwich
         slapReason="sandwich";
         slapSuccess=true;
-      } else if (useFlush && this.checkFlush(top, second, third)){         //flush
+      } else if (this.rules.flush && this.checkFlush(top, second, third)){         //flush
         slapReason="flush";
         slapSuccess=true;
-      } else if (useStraight && this.checkStraight(top, second, third)){ //straight
+      } else if (this.rules.straight && this.checkStraight(top, second, third)){ //straight
         slapReason="straight";
         slapSuccess=true;
-      } else if (useBottomStack && this.getRank(top)==this.getRank(this.centerPile[0].card)){//bottom-stack
+      } else if (this.rules.bottomStack && this.getRank(top)==this.getRank(this.centerPile[0].card)){//bottom-stack
         slapReason="bottom-stack";
         slapSuccess=true;
       }
@@ -303,6 +301,8 @@ RS.prototype.prepRatscrew=function(){
   //Create players, create deck, allocate piles
   this.availableIDs=[];
   this.gameRunning=false;
+  
+  this.rules = {doubles:true, sandwich:true, flush:true, straight:true, bottomStack:true}
   for (var z=0;z<this.maxPlayers;z++){
     this.availableIDs.push(true);
   }
@@ -318,7 +318,6 @@ RS.prototype.beginRatscrew=function(){
   this.flipLock=false;
   this.slapIntrusion=false;
   this.clearDelay = 700;
-  this.handleAITurn();
 };
 
 RS.prototype.curr=function(){return this.currPlayer;};
@@ -330,6 +329,9 @@ RS.prototype.gameState=function(){
     playersToSend[z]= new ClientPlayer(this.players[z].id, this.players[z].name, this.players[z].cards.length, this.players[z].color, z);
   }
   return playersToSend;
+};
+RS.prototype.getRules=function(){
+  return this.rules;
 };
 RS.prototype.resetPlayer=function(socket){
   var myIndex=this.findIndex(socket), myName="Anonymous";
@@ -348,23 +350,30 @@ RS.prototype.resetPlayer=function(socket){
 };
 RS.prototype.assignName=function(socket, name){
   //Returns whether the player was added or not; or if the name change was successful
-  //Can assign an AI player by sending a NULL socket
   var existingIndex = this.findIndex(socket),
-      myID=this.nextGoodID(),
-      colors = ['#4d79ff', '#00cc00', '#cc00ca','#ffcc00'];
+      myID=this.nextGoodID();
   if (existingIndex!==false && socket!==null){               //Player is changing name
     this.players[existingIndex].name = name;
     console.log("Player",name,"updated in roster.");
-    return true;
+    return {added: true};
   }
   if (myID===false) {
     console.log("Player",name,"NOT added to the roster (table full).");
-    return false;
+    return {added: false};
   }
   this.availableIDs[myID]=false;
-  if (socket) this.players.push(new ServerPlayer(socket, name, myID, colors[myID]));
-  else this.players.push(new this.AI(socket, name, myID, colors[myID]));
-  console.log("Player",name,"added to the roster.");
+  console.log("Player",name,"being added to the roster.");
+  this.players.push(new ServerPlayer(socket, name, myID, this.colors[myID]));
+  return true;
+};
+RS.prototype.addAI=function(serverPath, roomID){
+  var myID=this.nextGoodID();
+  if (myID===false) {
+    console.log("AI player NOT added to the roster (table full).");
+    return false;
+  }
+  console.log("AI player being added to the bots roster.");
+  this.myBots.push(new this.AI(serverPath, 'AI Player', roomID));
   return true;
 };
 RS.prototype.passReady=function(socket, readiness){
@@ -387,6 +396,27 @@ RS.prototype.resetGame=function(){
   this.winner=false;
   this.prepRatscrew();
 };
+RS.prototype.ruleChange=function(rule){
+  var ruleState;
+  switch (rule) {
+    case ('doubles'):
+      this.rules.doubles=!this.rules.doubles; ruleState=this.rules.doubles; break;
+    case ('sandwich'):
+      this.rules.sandwich=!this.rules.sandwich; ruleState=this.rules.sandwich; break;
+    case ('flush'):
+      this.rules.flush=!this.rules.flush; ruleState=this.rules.flush; break;
+    case ('straight'):
+      this.rules.straight=!this.rules.straight; ruleState=this.rules.straight; break;
+    case ('bottomStack'):
+      this.rules.bottomStack=!this.rules.bottomStack; ruleState=this.rules.bottomStack; break;
+    default:
+      break;
+  }
+  console.log("Just changed rule",rule);//,"to",this.rules);
+  if (ruleState===true) ruleState='On';
+  else ruleState='Off';
+  return {msg:' has turned the '+rule+' rule '+ruleState};
+}
 RS.prototype.isFull=function (){
   if (this.players.length===this.maxPlayers) return true; else return false;
 };

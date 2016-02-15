@@ -216,7 +216,7 @@ h1 {
   transition-property: right, overflow;
   transition-duration: .75s;
   transition-timing-function: ease-out;
-  width: 315px;
+  width: 330px;
   height: 64%;
   bottom: 10%;
   right: 5px;
@@ -228,7 +228,7 @@ h1 {
   transition-property: right, overflow;
   transition-duration: .5s;
   transition-timing-function: ease-out;
-  width: 315px;
+  width: 330px;
   height: 64%;
   bottom: 10%;
   right: -320px;
@@ -303,4 +303,8 @@ h1 {
   overflow-y: scroll;
   text-align: left;
   color: #B2D0CD;
+}
+
+.ruleOff {
+  background-color: maroon;
 }

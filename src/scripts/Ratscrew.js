@@ -72,7 +72,7 @@ var GameTable = React.createClass({
   },
   _findMyIndex: function() {
     var z=0;
-    if (z===this.props.gameInfo.players.length) return false;   //twice: once to check for null array, and then again if we made it through the whole thing
+    if (z===this.props.gameInfo.players.length) return false; //Checking twice: once to check for null array, and then again if we made it through the whole thing
     while (z<this.props.gameInfo.players.length && this.props.gameInfo.players[z].id!==this.props.gameInfo.myPlayerID){
       z++;
     }
@@ -175,7 +175,7 @@ var SingleRoom = React.createClass({
       <div className={"singleRoom"} >
         <GameTable gameInfo={this.props} />
         <Chat players={this.props.players} roomID={this.props.roomID} />
-        <Rules />
+        <Rules rules={this.props.rules} roomID={this.props.roomID} />
       </div>
     );//
   }
@@ -200,7 +200,8 @@ var ClientUI = React.createClass({
             myPlayerID:false,
             curr:undefined,
             roomsList: [],
-            roomID:undefined
+            roomID:undefined,
+            rules: {doubles:true, sandwich:true, flush:true, straight:true, bottomStack:true}
             };
   },
   componentDidMount: function() {
@@ -211,7 +212,7 @@ var ClientUI = React.createClass({
   _updateGameState: function(data){
     console.log("Received gamestate update");
     console.log(data);
-    this.setState({players:data.players, curr:data.curr, penalty:data.penalty, center:data.center, roomID:data.roomID});
+    this.setState({players:data.players, curr:data.curr, penalty:data.penalty, center:data.center, roomID:data.roomID, rules:data.rules});
   },
   _updateRoomsList: function(data){
     console.log("Received a rooms update");
@@ -232,7 +233,7 @@ var ClientUI = React.createClass({
       return (
         <div>
           <RoomBox roomsList={this.state.roomsList} myRoom={this.state.roomID} />
-          <SingleRoom players={this.state.players} curr={this.state.curr} penalty={this.state.penalty} center={this.state.center} roomID={this.state.roomID} myPlayerID={this.state.myPlayerID} />
+          <SingleRoom players={this.state.players} curr={this.state.curr} penalty={this.state.penalty} center={this.state.center} roomID={this.state.roomID} myPlayerID={this.state.myPlayerID} rules={this.state.rules} />
         </div>
         );
     }
@@ -492,17 +493,24 @@ var Rules = React.createClass({
   getInitialState: function() {
     return {showRules:false};
   },
+  componentDidMount: function() {
+    window.addEventListener('ruleChange', this._sendRules);
+  },
   _toggleRules: function() {
     this.setState({showRules:!this.state.showRules});
   },
   _hideRules: function() {
     this.setState({showRules:false});
   },
+  _sendRules: function(e) {
+    console.log("Rule listener triggered", e.detail);
+    socket.emit('rule', {rule:e.detail, roomID:this.props.roomID});
+  },
   render: function() {
     return (
       <div>
         <div className={"rulesIcon"} onClick={this._toggleRules} />
-        <RulesModal willShowMe={this.state.showRules} hide={this._hideRules}/>
+        <RulesModal willShowMe={this.state.showRules} hide={this._hideRules} rules={this.props.rules} roomID={this.props.roomID}/>
       </div>
       );
       
@@ -572,33 +580,54 @@ var RulesModal = React.createClass({
         j++;
       }
       bottomstack.pop();
-      return (
-        <div className={'rulesModal mainTheme'} onClick={this.props.hide} onBlur={this.props.hide}>
+      var ruleOff='ruleOff', doublesClass='', sandwichClass='', flushClass='', straightClass='', bottomStackClass='';
+      if (this.props.rules.doubles===false) doublesClass=ruleOff;
+      if (this.props.rules.sandwich===false) sandwichClass=ruleOff;
+      if (this.props.rules.flush===false) flushClass=ruleOff;
+      if (this.props.rules.straight===false) straightClass=ruleOff;
+      if (this.props.rules.bottomStack===false) bottomStackClass=ruleOff;
+      return (//onClick={this.props.hide} onBlur={this.props.hide}
+        <div className={'rulesModal mainTheme'} >
           <span style={{fontSize:"17pt"}}><u><b>Rules of Egyptian Ratscrew:</b></u></span>
           <ul>
             <li>The point of the game is to get all the cards. Players have two actions: flip <b>[TAB]</b> and slap <b>[SPACEBAR]</b>.
-          </li><li>Starting with the first player to sit down, players flip the top card off their pile and place it face-up in the middle. If the card played is a number card, the next player puts down a card, too. This continues around the table until somebody puts down a face card <b>(J, Q, K, or A)</b>.
-          </li><li>When a face card (aces are face cards!) is played, the next person in the sequence must flip another face card in the alloted number of chances in order for play to continue.
-          </li><li><b>Chances provided: J -> 1, Q -> 2, K -> 3, A -> 4.</b>
-          </li><li>If the next person in the sequence does NOT play a face card within their allotted number of chances, the person who played the last face card wins the round and the whole pile goes to them. The winner begins the next round of play.
-          </li><li>The only thing that overrides the face card rule is the slap rule. If a slap pattern is present, no matter the status of the pile, the first person to slap is the winner of that round.
-          </li><li>If you slap and there is nothing to slap on, you lose two cards to the penalty pile (that the next pile winner will collect).
-          </li></ul><ul type={"circle"}><b><u>Slappable Patterns:</u></b>
-            <li><b>Doubles</b>: any 2 cards of the same rank:</li>
-            {doubles}
-            <li><b>Sandwich</b>: 2 cards of the same rank with 1 card between them:</li>
-            {sandwich}
-            <li><b>Flush</b>: 3 cards in a row of the same suit:</li>
-            {flush}
-            <li><b>Straight</b>: 3 cards in a row of ascending or descending ranks, no 'Ace wrap-a-rounds':</li>
-            {straight}
-            <li><b>Bottom-stack</b>: a 'super sandwich' with the top card and the bottom card of the whole stack of the same rank:</li>
-            {bottomstack}
+            </li><li>Starting with the first player to sit down, players flip the top card off their pile and place it face-up in the middle. If the card played is a number card, the next player puts down a card, too. This continues around the table until somebody puts down a face card <b>(J, Q, K, or A)</b>.
+            </li><li>When a face card (aces are face cards!) is played, the next person in the sequence must flip another face card in the alloted number of chances in order for play to continue.
+            </li><li><b>Chances provided: J -> 1, Q -> 2, K -> 3, A -> 4.</b>
+            </li><li>If the next person in the sequence does NOT play a face card within their allotted number of chances, the person who played the last face card wins the round and the whole pile goes to them. The winner begins the next round of play.
+            </li><li>The only thing that overrides the face card rule is the slap rule. If a slap pattern is present, no matter the status of the pile, the first person to slap is the winner of that round.
+            </li><li>If you slap and there is nothing to slap on, you lose two cards to the penalty pile (that the next pile winner will collect).
+          </li></ul><ul type={"circle"}><b><u>Slappable Patterns:</u> (click to toggle on/off)</b>
+            <li><RuleExample className={doublesClass} type='doubles' title='Doubles' caption=' any 2 cards of the same rank:' cardArray={doubles} />
+              </li>
+            <li><RuleExample className={sandwichClass} type='sandwich' title='Sandwich' caption=' 2 cards of the same rank with 1 card between them:' cardArray={sandwich} />
+              </li>
+            <li><RuleExample className={flushClass} type='flush' title='Flush' caption=' 3 cards in a row of the same suit:' cardArray={flush} />
+              </li>
+            <li><RuleExample className={straightClass} type='straight' title='Straight' caption=" 3 cards in a row of ascending or descending ranks, no 'Ace wrap-a-rounds':" cardArray={straight} />
+              </li>
+            <li><RuleExample className={bottomStackClass} type='bottomStack' title='Bottom-stack' caption=" a 'super sandwich' with the top card and the bottom card of the whole stack of the same rank:" cardArray={bottomstack} />
+              </li>
           </ul>
         </div>
     )} else {
       return (<div/>)
     }
+  }
+});
+var RuleExample= React.createClass({
+  _ruleToggle: function(){
+    console.log('Triggering rule change:',this.props.type);
+    var event = new CustomEvent('ruleChange', {'detail': this.props.type});
+    window.dispatchEvent(event);
+  },
+  render: function(){
+    return (
+      <div className={this.props.className} onClick={this._ruleToggle}>
+        <b>{this.props.title}</b>:{this.props.caption}<br/>
+        {this.props.cardArray}
+      </div>
+      );
   }
 });
 

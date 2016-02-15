@@ -45,7 +45,8 @@ var server = http.createServer(function(request, response){
   });
 });
 
-server.listen(process.env.PORT || 8001);
+var serverPath=process.env.PORT || 8001;
+server.listen(serverPath);
 console.log("listening on port 8001");
 var ios = io.listen(server);
 
@@ -53,15 +54,16 @@ function GameRoom(){
   this.gL=new RatscrewLogic();
   this.id=Date.now();
   this.users=[];
+  this.numAI=0;
 }
 function sendGameState(socket, ios, mRI, toAll){
   console.log("Sending game state to room index:", mRI);
   if (toAll) {                                        //An array of all of the players, names, and card len`gths
     ios.to(gameRooms[mRI].id).emit("gameState",{roomID:gameRooms[mRI].id, players:gameRooms[mRI].gL.gameState(), curr:gameRooms[mRI].gL.curr(),
-      center:gameRooms[mRI].gL.center(), penalty:gameRooms[mRI].gL.penalty()});
+      center:gameRooms[mRI].gL.center(), penalty:gameRooms[mRI].gL.penalty(), rules:gameRooms[mRI].gL.getRules()});
   } else {
     socket.emit("gameState",{roomID:gameRooms[mRI].id, players:gameRooms[mRI].gL.gameState(), curr:gameRooms[mRI].gL.curr(),
-      center:gameRooms[mRI].gL.center(), penalty:gameRooms[mRI].gL.penalty()});
+      center:gameRooms[mRI].gL.center(), penalty:gameRooms[mRI].gL.penalty(), rules:gameRooms[mRI].gL.getRules()});
   }
 }
 function emitMessage(socket, ios, mRI, message, isChat){
@@ -90,6 +92,7 @@ function emitWinner(socket, ios, mRI){
   setTimeout(function(){                          //Intending to reset the game;
     if (gameRooms[mRI]===undefined) return;       //Room has been emptied of all users and spliced
     gameRooms[mRI].gL.resetGame();
+    gameRooms[mRO].numAI=0;
     sendGameState(socket, ios, mRI, true);
     sendRoomsList(socket, ios, true);
     sendButtonStatus(socket, ios, mRI, !gameRooms[mRI].gL.readyForReady());
@@ -104,10 +107,10 @@ function sendButtonStatus(socket, ios, mRI, disabled){
 }
 function sendID(socket, mRI){
   myID = gameRooms[mRI].gL.getID(socket);
-  /*if (myID===false) {
+  if (myID===false) {
     console.log("Could not send player ID");
     return;
-  }*/
+  }
   console.log("Sending user ID:",myID);
   socket.emit("id",{id:myID});
 }
@@ -129,11 +132,12 @@ function createRoom(socket, ios){
 function sitDown(socket, ios, mRI, name){
   var prevName, added;
   prevName=gameRooms[mRI].gL.getName(socket);
-  added = gameRooms[mRI].gL.assignName(socket, name);
+  added=gameRooms[mRI].gL.assignName(socket, name);
   if (added) {
-    if (prevName===gameRooms[mRI].gL.getName("Garbage")) emitMessage(socket, ios, mRI, "has sat down.", false);    //First name assignment
-    else emitMessage(socket, ios, mRI, "is the new name for "+prevName, false);
-    if (socket) sendID(socket, mRI);
+    if (prevName===gameRooms[mRI].gL.getName("Garbage")) {
+      emitMessage(socket, ios, mRI, "has sat down.", false);    //First name assignment
+      sendID(socket, mRI);
+    } else emitMessage(socket, ios, mRI, "is the new name for "+prevName, false);
   } else {if (socket) socket.emit("fullTable"); return;}
 }
 function findRoomIndex(roomID){
@@ -148,16 +152,11 @@ function joinRoom(socket, ios, roomID){
     console.log("User tried to join a room that doesn't exist")
     return;
   }
-  if (socket){                                  //Human Player
-    socket.join(roomID);
-    gameRooms[mRI].users.push(socket);
-    console.log("joinRoom, mRI:",mRI);
-    sendID(socket,mRI);
-    sendGameState(socket, ios, findRoomIndex(roomID), false);
-  } else {                                      //AI Player
-    gameRooms[mRI].users.push('AI');
-    console.log("joinRoom (AI), mRI:",mRI);
-  }
+  socket.join(roomID);
+  gameRooms[mRI].users.push(socket);
+  console.log("joinRoom, mRI:",mRI);
+  sendID(socket,mRI);
+  sendGameState(socket, ios, findRoomIndex(roomID), false);
   sendRoomsList(socket, ios, true);
 }
 function findMyRoom(socket){
@@ -174,7 +173,7 @@ function findMyRoom(socket){
   return mRI;
 }
 function leaveRoom(socket, ios){
-  var mRI=findMyRoom(socket), humanPlayers=0;
+  var mRI=findMyRoom(socket);
   if (mRI===false) {
     console.log("No idea what room this user is in. Whatevs.");
     return;
@@ -182,10 +181,7 @@ function leaveRoom(socket, ios){
   console.log(gameRooms[mRI].gL.getName(socket),"is leaving room:",mRI);
   gameRooms[mRI].users.splice(gameRooms[mRI].users.indexOf(socket), 1);
   socket.leave(gameRooms[mRI].id);
-  for (var z=0;z<gameRooms[mRI].users.length;z++){
-    if (gameRooms[mRI].users[z]!=='AI') humanPlayers++;
-  }
-  if (humanPlayers===0) {
+  if (gameRooms[mRI].users.length -gameRooms[mRI].numAI===0) {
     console.log("Splicing out an empty gameRoom");
     gameRooms.splice(mRI, 1);
   } else {
@@ -228,10 +224,6 @@ ios.sockets.on('connection', function(socket){
     leaveRoom(socket,ios);
     joinRoom(socket, ios, data.roomID);
   });
-
-  //RULE SELECTION
-  //BETTER UI
-
   socket.on('gameReq', function(data){
     var mRI=findRoomIndex(data.roomID);
     if (mRI===false) {console.log("There was a problem in finding the roomID specified (gameReq)"); return;}
@@ -278,10 +270,13 @@ ios.sockets.on('connection', function(socket){
     var mRI=findRoomIndex(data.roomID);
     if (mRI===false) {console.log("There was a problem in finding the roomID specified (addAI)"); return;}
     console.log("Received AI request from:",gameRooms[mRI].gL.getName(socket));
-    sitDown(null, ios, mRI, 'AI-Player');
-    sendGameState(socket, ios, mRI, true);
-    sendButtonStatus(socket, ios, mRI, !gameRooms[mRI].gL.readyForReady());
-    sendRoomsList(socket, ios, true);
+    //Call gamelogic to add player and then have AI player request his name addition
+    aiResult = gameRooms[mRI].gL.addAI("http://localhost:"+serverPath+"/", data.roomID);
+    if (!aiResult) {
+      emitMessage(serverName, ios, mRI, "Room is too full to add an AI player.", false);
+      return;
+    }
+    gameRooms[mRI].numAI++;
   });
   socket.on("startReady", function(data){
   //Passes user-readiness on
@@ -308,15 +303,11 @@ ios.sockets.on('connection', function(socket){
     emitMessage(socket, ios, mRI, flipResult.msg, false);
     sendGameState(socket, ios, mRI, true);
     if (flipResult.clear) serverClear(flipResult.clearPlayer, ios, mRI, 'Flip');
-    else {
-      sendGameState(socket, ios, mRI, true);
-      checkForAI(ios, mRI);
-    }
     console.log("Server post flip, curr:",gameRooms[mRI].gL.curr());
     if (gameRooms[mRI].gL.winner!==false) emitWinner(gameRooms[mRI].gL.winner,ios,mRI);
   });
   socket.on('slap', function(data){
-    var slapOutcome, mRI, AITurn;
+    var slapOutcome, mRI;
     mRI=findRoomIndex(data.roomID);
     if (mRI===false) {console.log("There was a problem in finding the roomID specified (slap)"); return;}
     console.log("Received slap message from:",gameRooms[mRI].gL.getName(socket));
@@ -327,11 +318,16 @@ ios.sockets.on('connection', function(socket){
     }
     emitMessage(socket, ios, mRI, slapOutcome.msg, false);
     if (slapOutcome.success) serverClear(gameRooms[mRI].gL.findIndex(socket), ios, mRI, 'Slap');
-    else {
-      sendGameState(socket, ios, mRI, true);
-      checkForAI(ios, mRI);
-    }
+    sendGameState(socket, ios, mRI, true);
     if (gameRooms[mRI].gL.winner!==false) emitWinner(gameRooms[mRI].gL.winner,ios,mRI);
+  });
+  socket.on('rule', function(data){
+    var mRI=findRoomIndex(data.roomID), ruleOutcome;
+    if (mRI===false) {console.log("There was a problem in finding the roomID specified (rule)"); return;}
+    console.log("Attempting to change rule:",data.rule,"to",data.toVal);
+    ruleOutcome=gameRooms[mRI].gL.ruleChange(data.rule);
+    emitMessage(socket, ios, mRI, ruleOutcome.msg, false);
+    sendGameState(socket, ios, mRI, true);
   });
   
   socket.on('disconnect', function(data){
@@ -349,20 +345,5 @@ function serverClear(socket, ios, mRI, clearType){
   gameRooms[mRI].gL.clearCenter(socket, clearType, function() {
     console.log("Running callback");
     sendGameState(subSock, subIos, subRoom, true);
-    checkForAI(subIos, subRoom);
   });
-}
-
-function checkForAI(ios, mRI){
-  var thisAITurn=gameRooms[mRI].gL.handleAITurn(function(aiTurnResults) {
-    var messagePlyr;
-    if (aiTurnResults.action.clear) serverClear(aiTurnResults.action.clearPlayer, ios, mRI, 'Flip');
-    if (aiTurnResults.clearPlayer===false) messagePlyr="AI";
-    else messagePlyr=aiTurnResults.clearPlayer;
-    emitMessage(messagePlyr, ios, mRI, aiTurnResults.action.msg, false);
-    sendGameState(null, ios, mRI, true);
-  });
-  if (thisAITurn.check) {               //It's the AI's turn and they did something
-    checkForAI(ios, mRI);
-  } else return;
 }
