@@ -17,7 +17,9 @@ var server = http.createServer(function(request, response){
     case '/src/scripts/Ratscrew.js':
     case '/socket.io/socket.io.js':
     case "/src/scripts/Suits.js":
-    case "/build/scripts/bundle.js":
+    case "/src/scripts/Icons.js":
+    case "/src_server/CardLogic.js":
+    case "/build/bundle.js":
       response.writeHead(200, {"Content-Type": "application/javascript"}); break;
     case '/src/styles/Ratstyle.css':
     case '/build/styles/styles.css':
@@ -90,9 +92,9 @@ function emitWinner(socket, ios, mRI){
   console.log("emitWinner, mRI:",mRI);
   emitMessage(serverName, ios, mRI, gameRooms[mRI].gL.getName(socket)+" has won! Reseting the game...", true);
   setTimeout(function(){                          //Intending to reset the game;
-    if (gameRooms[mRI]===undefined) return;       //Room has been emptied of all users and spliced
+    if (gameRooms[mRI]===undefined) return;       //Room has already somehow been emptied of all users and spliced
     gameRooms[mRI].gL.resetGame();
-    gameRooms[mRO].numAI=0;
+    gameRooms[mRI].numAI=0;
     sendGameState(socket, ios, mRI, true);
     sendRoomsList(socket, ios, true);
     sendButtonStatus(socket, ios, mRI, !gameRooms[mRI].gL.readyForReady());
@@ -107,17 +109,17 @@ function sendButtonStatus(socket, ios, mRI, disabled){
 }
 function sendID(socket, mRI){
   myID = gameRooms[mRI].gL.getID(socket);
-  if (myID===false) {
+  /*if (myID===false) {
     console.log("Could not send player ID");
     return;
-  }
+  }*/
   console.log("Sending user ID:",myID);
   socket.emit("id",{id:myID});
 }
 function sendRoomsList(socket, ios, toAll){
   var tempArray=[];
   for(var z=0;z<gameRooms.length;z++){
-    console.log("sendingRoomsList, arraying gameRooms; z=",z,"gameRooms.length:",gameRooms.length);
+    console.log("sendingRoomsList, arraying gameRooms; z=",z,"gameRooms.length:",gameRooms.length,"AIs:",gameRooms[z].numAI);
     tempArray.push({name:roomPrefix+(z+1), id: gameRooms[z].id, numPlayers:gameRooms[z].gL.gameState().length});
   }
   if (toAll) ios.sockets.emit('roomsList', {roomsList:tempArray});
@@ -181,7 +183,7 @@ function leaveRoom(socket, ios){
   console.log(gameRooms[mRI].gL.getName(socket),"is leaving room:",mRI);
   gameRooms[mRI].users.splice(gameRooms[mRI].users.indexOf(socket), 1);
   socket.leave(gameRooms[mRI].id);
-  if (gameRooms[mRI].users.length -gameRooms[mRI].numAI===0) {
+  if (gameRooms[mRI].users.length - gameRooms[mRI].numAI===0) {
     console.log("Splicing out an empty gameRoom");
     gameRooms.splice(mRI, 1);
   } else {
@@ -214,9 +216,8 @@ ios.sockets.on('connection', function(socket){
     var newRoomIndex;
     leaveRoom(socket,ios);
     newRoomIndex=createRoom(socket, ios);
-    console.log("newRoomIndex=",newRoomIndex);
+    console.log("newRoomIndex =",newRoomIndex);
     joinRoom(socket, ios, gameRooms[newRoomIndex].id);
-    sendID(socket, newRoomIndex);
   });
   socket.on('roomSelect', function(data){
     console.log("Player joining room",data.roomID);
@@ -271,7 +272,7 @@ ios.sockets.on('connection', function(socket){
     if (mRI===false) {console.log("There was a problem in finding the roomID specified (addAI)"); return;}
     console.log("Received AI request from:",gameRooms[mRI].gL.getName(socket));
     //Call gamelogic to add player and then have AI player request his name addition
-    aiResult = gameRooms[mRI].gL.addAI("http://localhost:"+serverPath+"/", data.roomID);
+    aiResult = gameRooms[mRI].gL.addAI("http://localhost:"+serverPath+"/", data.roomID, data.difficulty);
     if (!aiResult) {
       emitMessage(serverName, ios, mRI, "Room is too full to add an AI player.", false);
       return;
@@ -332,7 +333,6 @@ ios.sockets.on('connection', function(socket){
   
   socket.on('disconnect', function(data){
   //Removes the player from the server list
-    var mRI=false;
     console.log("User disconnected!");
     leaveRoom(socket, ios);
   });

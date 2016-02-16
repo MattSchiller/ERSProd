@@ -1,5 +1,9 @@
 var socket;
 
+var CardCanvas = require('./Suits.js');
+
+var IconCanvas = require('./Icons.js');
+
 var CardBox = React.createClass({
   _findColor: function(index) {
     if (this.props.players[index]===undefined) return "black";
@@ -137,9 +141,8 @@ var SelfBox = React.createClass({
     if (this.props.player===undefined) return <div />;
     return (
       <div className='self'>
-        <SinglePlayer player={this.props.player} curr={this.props.curr} className={'mainTheme'}/>
-        <StandUpButton roomID={this.props.roomID} />
-        <AIButton roomID={this.props.roomID} numPlayers={this.props.numPlayers} />
+        <SinglePlayer player={this.props.player} curr={this.props.curr} className='mainTheme'/>
+        <Settings roomID={this.props.roomID} numPlayers={this.props.numPlayers} idVal='settings' />
       </div>
       )
   }
@@ -423,20 +426,9 @@ var SitDownButton = React.createClass({
   render: function(){
     if (this.props.myPlayerID===false) {
       return (
-        <input id="nameBox" type={"text"} className="self sitDown mainTheme activeTwo" placeholder={this.state.caption} style={{color:"black"}} onKeyPress={this._handleEnter} ref="nameInput" />
+        <input id="nameBox" type={"text"} className="singlePlayer self sitDown mainTheme activeTwo" placeholder={this.state.caption} style={{color:"black"}} onKeyPress={this._handleEnter} ref="nameInput" />
       )
     } else return <div ref="nameInput"/>;
-  }
-});
-var StandUpButton = React.createClass({
-  _sendStandUp: function() {
-    console.log("Sending stand up notice");
-    socket.emit('standUp', {roomID: this.props.roomID});
-  },
-  render: function() {
-    return (
-      <div onClick={this._sendStandUp} className="mainTheme standUp">[LEAVE GAME]</div>
-      );
   }
 });
 var ReadyButton = React.createClass({
@@ -451,7 +443,10 @@ var ReadyButton = React.createClass({
   },
   _toggleButton: function(data) {
     var readinessToMaintain = true;
-    if (this.props.myPlayerID===false) return;          //If we don't have an ID, don't show the ready button
+    if (this.props.myPlayerID===false) {                    //If we don't have an ID, don't show the ready button
+      this.setState({disabled:true});
+      return;
+    }
     if (data.disabled===true) readinessToMaintain=false;    //If we're told to turn off the button, reset readiness to false(?)
     console.log("button disabled:",data.disabled)
     this.setState({disabled:data.disabled, readinessToSend:readinessToMaintain});
@@ -462,38 +457,115 @@ var ReadyButton = React.createClass({
     this.setState({readinessToSend:!this.state.readinessToSend});
   },
   render: function() {
-    if (!this.state.disabled) {
-      var text=" ", backColor="";
-      if (!this.state.readinessToSend) {
-        text=" not ";
-        backColor=" notReady";
-      }
-      return (
-        <button className={"readyButton mainTheme activeTwo"+backColor} onClick={this._handleClick}>
-          {this.state.caption}{text}ready
-        </button>
-        )
+    if (this.state.disabled || (this.props.myPlayerID===false)) {
+      return <div/>;
     }
-    return <div/>
+    var text=" ", backColor="";
+    if (!this.state.readinessToSend) {
+      text=" not ";
+      backColor=" notReady";
+    }
+    return (
+      <button className={"readyButton mainTheme activeTwo"+backColor} onClick={this._handleClick}>
+        {this.state.caption}{text}ready
+      </button>
+      );
   }
 });
-var AIButton = React.createClass({
-  _sendAIRequest: function() {
-    console.log("Requesting an AI player");
-    socket.emit('addAI', {roomID:this.props.roomID});
+var Settings = React.createClass({
+  getInitialState: function() {
+    return {showButtons:false,
+            height: 45,
+            width: 45,
+            color: '#39B3C1'
+    };
+  },
+  componentDidMount: function() {
+    var myCanvas = document.getElementById(this.props.idVal),
+        myImage = new IconCanvas(myCanvas);
+    myImage.drawSettings(this.state.color);
+  },
+  _toggleSettings: function() {
+    this.setState({showButtons:!this.state.showButtons});
   },
   render: function() {
-    if (this.props.numPlayers>1) return (<div />);
     return (
-      <div onClick={this._sendAIRequest} className='light AI'>ADD AI</div>
-      );
+      <div>
+        <canvas id={this.props.idVal} className={this.props.idVal} height={this.state.height} width={this.state.width} onClick={this._toggleSettings}/>
+        <div className='subSettings'>
+          <StandUpButton roomID={this.props.roomID} showMe={this.state.showButtons} idVal='standUp' height={this.state.height} width={this.state.width}/>
+          <AIButton roomID={this.props.roomID}  numPlayers={this.props.numPlayers} showMe={this.state.showButtons} color={this.state.color} idVal='AI'
+            height={this.state.height} width={this.state.width} callBack={this._toggleSettings}/>
+        </div>
+      </div>
+    );
+  }
+})
+var StandUpButton = React.createClass({
+  getInitialState: function() {
+    return {caption: 'X',
+            color: '#E68A00',
+            fontSize: 30
+    };
+  },
+  componentWillReceiveProps: function(nextProps) {
+    var myCanvas=document.getElementById(this.props.idVal),
+        myImage = new IconCanvas(myCanvas);
+    if (nextProps.showMe) myImage.drawSubSettings(this.state.caption, this.state.color, this.state.fontSize);
+    else myImage.clear();
+  },
+  _sendStandUp: function() {
+    console.log("Sending stand up notice");
+    socket.emit('standUp', {roomID: this.props.roomID});
+  },
+  render: function() {
+    var myClass = this.props.idVal;
+    if (!this.props.showMe) myClass='';
+    return (
+      <canvas id={this.props.idVal} height={this.props.height} width={this.props.width} onClick={this._sendStandUp} className={myClass} />
+    );
+  }
+});
+
+
+var AIButton = React.createClass({
+  getInitialState: function() {
+    return {difficulty:'hard',
+            caption: 'AI',
+            fontSize: 28
+    };
+  },
+  componentWillReceiveProps: function(nextProps) {
+    var myCanvas=document.getElementById(this.props.idVal),
+        myImage = new IconCanvas(myCanvas);
+    if (nextProps.numPlayers<2 && nextProps.showMe) myImage.drawSubSettings(this.state.caption, this.props.color, this.state.fontSize);
+    else myImage.clear();
+  },
+  _sendAIRequest: function() {
+    console.log("Requesting an AI player");
+    this.props.callBack();
+    socket.emit('addAI', {roomID:this.props.roomID, difficulty:this.state.difficulty});
+  },
+  render: function() {
+    var myClass = this.props.idVal;
+    if (this.props.numPlayers>1 || !this.props.showMe) myClass='';
+    return (
+      <canvas id={this.props.idVal} height={this.props.height} width={this.props.width} onClick={this._sendAIRequest} className={myClass} />
+    );
   }
 });
 var Rules = React.createClass({
   getInitialState: function() {
-    return {showRules:false};
+    return {showRules:false,
+            height:60,
+            width: 60,
+            color: '#39B3C1'
+    };
   },
   componentDidMount: function() {
+    var myCanvas = document.getElementById('rulesIcon'),
+        myImage = new IconCanvas(myCanvas);
+    myImage.drawRules('?', this.state.color);
     window.addEventListener('ruleChange', this._sendRules);
   },
   _toggleRules: function() {
@@ -509,11 +581,10 @@ var Rules = React.createClass({
   render: function() {
     return (
       <div>
-        <div className={"rulesIcon"} onClick={this._toggleRules} />
+        <canvas id='rulesIcon' className="rulesIcon" height={this.state.height} width={this.state.width} onClick={this._toggleRules}/>
         <RulesModal willShowMe={this.state.showRules} hide={this._hideRules} rules={this.props.rules} roomID={this.props.roomID}/>
       </div>
       );
-      
   }
 });
 var RulesModal = React.createClass({

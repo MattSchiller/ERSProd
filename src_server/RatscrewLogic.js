@@ -1,3 +1,5 @@
+var CardLogic = require('./CardLogic.js');
+
 function ServerPlayer(socket, name, id, color) {
   this.socket = socket;
   this.name = name;
@@ -45,11 +47,11 @@ DeckOfCards.prototype.shuffle = function (n){
       }
     }
   };
-DeckOfCards.prototype.deal =  function(){
+DeckOfCards.prototype.deal = function(){
     if (this.cards.length > 0){return this.cards.shift();
     } else {return null;}
   };
-DeckOfCards.prototype.dealCards= function(players){
+DeckOfCards.prototype.dealCards = function(players){
   var j = 0;
   this.shuffle(10);
   while (this.cards.length > 0 && players.length) {
@@ -77,6 +79,7 @@ function RS () {
   this.gameRunning=undefined;
   this.prepRatscrew();
   this.AI = require('./AI.js');
+  this.cL = new CardLogic();
   this.myBots = [];
   this.colors = ['#4d79ff', '#00cc00', '#cc00ca','#ffcc00'];
   this.rules = {
@@ -203,21 +206,21 @@ RS.prototype.slap=function(socket){
   } else {
     var top = this.centerPile[len-1].card;
     var second = this.centerPile[len-2].card;
-    if (this.rules.doubles && this.getRank(top)==this.getRank(second)){                 //doubles
+    if (this.rules.doubles && this.cL.checkDoubles(top, second)){                 //doubles
       slapReason="double";
       slapSuccess=true;
     } else if (len > 2) {//can have triplet rules
       var third = this.centerPile[len-3].card;
-      if (this.rules.sandwich && this.getRank(top)==this.getRank(third)){               //sandwich
+      if (this.rules.sandwich && this.cL.checkDoubles(top,third)){               //sandwich
         slapReason="sandwich";
         slapSuccess=true;
-      } else if (this.rules.flush && this.checkFlush(top, second, third)){         //flush
+      } else if (this.rules.flush && this.cL.checkFlush(top, second, third)){         //flush
         slapReason="flush";
         slapSuccess=true;
-      } else if (this.rules.straight && this.checkStraight(top, second, third)){ //straight
+      } else if (this.rules.straight && this.cL.checkStraight(top, second, third)){ //straight
         slapReason="straight";
         slapSuccess=true;
-      } else if (this.rules.bottomStack && this.getRank(top)==this.getRank(this.centerPile[0].card)){//bottom-stack
+      } else if (this.rules.bottomStack && this.cL.checkDoubles(top,this.centerPile[0].card)){//bottom-stack
         slapReason="bottom-stack";
         slapSuccess=true;
       }
@@ -237,27 +240,7 @@ RS.prototype.slap=function(socket){
       return {success:slapSuccess, msg:"slaps and finds a "+slapReason+"!"};
   }
 };
-
-//Card logic
-RS.prototype.getSuit=function(card){return card.slice(-1);};
-RS.prototype.getRank=function(card){return parseInt(card.slice(0, card.length-1));};
-RS.prototype.convertAce=function(card){
-  if (card===14){
-    return 1;
-  } else {return card;}
-};
-RS.prototype.checkFlush=function(card1, card2, card3){return (this.getSuit(card1)===this.getSuit(card2) && this.getSuit(card2)===this.getSuit(card3));};
-RS.prototype.faceValue=function(card){if (this.getRank(card)>10){return this.getRank(card)-10;} else {return false;}};
-RS.prototype.checkStraight=function(card1, card2, card3){
-  card1 = this.getRank(card1); card2 = this.getRank(card2); card3 = this.getRank(card3);
-  if ((card1==card2+1 && card2==card3+1) || (card1==card2-1 && card2==card3-1)){
-    return true;
-  } else if ( (card1==14 || card2==14 || card3==14) &&     //aces low handling, no wrap
-    ( (this.convertAce(card1)==this.convertAce(card2)+1 && this.convertAce(card2)==this.convertAce(card3)+1) ||
-      (this.convertAce(card1)==this.convertAce(card2)-1 && this.convertAce(card2)==this.convertAce(card3)-1) ) ){
-    return true;
-  } else {return false;}
-};
+RS.prototype.faceValue=function(card){if (this.cL.getRank(card)>10){return this.cL.getRank(card)-10;} else {return false;}};
 RS.prototype.doPenalty=function(num){
 //On an unsuccessful slap, removes the top X cards to penalty
   var penaltyNum = 2, temp;
@@ -300,6 +283,7 @@ RS.prototype.clearCenter=function(num, clearType, callBackFnc){
 RS.prototype.prepRatscrew=function(){
   //Create players, create deck, allocate piles
   this.availableIDs=[];
+  this.myBots = [];
   this.gameRunning=false;
   
   this.rules = {doubles:true, sandwich:true, flush:true, straight:true, bottomStack:true}
@@ -366,14 +350,14 @@ RS.prototype.assignName=function(socket, name){
   this.players.push(new ServerPlayer(socket, name, myID, this.colors[myID]));
   return true;
 };
-RS.prototype.addAI=function(serverPath, roomID){
+RS.prototype.addAI=function(serverPath, roomID, difficulty){
   var myID=this.nextGoodID();
   if (myID===false) {
     console.log("AI player NOT added to the roster (table full).");
     return false;
   }
   console.log("AI player being added to the bots roster.");
-  this.myBots.push(new this.AI(serverPath, 'AI Player', roomID));
+  this.myBots.push(new this.AI(serverPath, 'AI Player', roomID, difficulty));
   return true;
 };
 RS.prototype.passReady=function(socket, readiness){

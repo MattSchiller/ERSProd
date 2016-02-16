@@ -1,9 +1,9 @@
 var CardCanvas = (function (canvas) {
-    var context = canvas.getContext("2d"),
+    var context = canvas.getContext('2d'),
         x = canvas.width * 0.5,
         y = canvas.height * 0.5,
         width = canvas.width * 0.4,
-        height = canvas.height * 0.4;
+        height = canvas.height * 0.4,
         fontSize = (canvas.height / 70)*23,
         fontX = canvas.width / 2,
         fontY = canvas.height * 2.2/7;
@@ -12,7 +12,7 @@ var CardCanvas = (function (canvas) {
     context.fillRect(0,0,canvas.width, canvas.height);
     context.restore();
     
-    var drawSpade = function (){
+    var drawSpade = function (color){
         context.save();
         var bottomWidth = width * 0.7;
         var topHeight = height * 0.7;
@@ -70,7 +70,7 @@ var CardCanvas = (function (canvas) {
         context.restore();
     };
 
-    var drawHeart = function (){
+    var drawHeart = function (color){
     	context.save();
         context.beginPath();
     	var topCurveHeight = height * 0.3;
@@ -109,7 +109,7 @@ var CardCanvas = (function (canvas) {
     	context.restore();
     };
 
-    var drawClub = function (){
+    var drawClub = function (color){
     	context.save();
     	var circleRadius = width * 0.3;
     	var bottomWidth = width * 0.5;
@@ -164,7 +164,7 @@ var CardCanvas = (function (canvas) {
     	context.restore();
     };
 
-    var drawDiamond = function (){
+    var drawDiamond = function (color){
     	context.save();
         context.beginPath();
         context.moveTo(x, y);
@@ -189,18 +189,18 @@ var CardCanvas = (function (canvas) {
 
     var drawCard = function (card){
         var rank = parseInt(card.slice(0, card.length-1)),
-            suit = card.slice(-1);
+            suit = card.slice(-1),
             color = 'red';
         if (suit=='C' || suit=='S') color = 'black';
         switch (suit){
             case 'C':
-                drawClub(); break;
+                drawClub(color); break;
             case 'D':
-                drawDiamond(); break;
+                drawDiamond(color); break;
             case 'H':
-                drawHeart(); break;
+                drawHeart(color); break;
             case 'S':
-                drawSpade(); break;
+                drawSpade(color); break;
         }
         switch (rank){
             case 11:
@@ -220,4 +220,6 @@ var CardCanvas = (function (canvas) {
     return {
         drawCard: drawCard
     };
- });
+});
+
+module.exports = CardCanvas;
