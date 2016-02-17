@@ -546,7 +546,7 @@
 	  },
 	  render: function render() {
 	    var myClass = this.state.idVal;
-	    if (!this.props.showMe) myClass = '';
+	    if (this.props.numPlayers > 3 || !this.props.showMe) myClass = '';
 	    return React.createElement('div', null, React.createElement('canvas', { id: this.state.idVal, height: this.props.height, width: this.props.width, onClick: this._showAIs, className: myClass }), React.createElement('div', { className: 'aiLevels' }, this.state.aiLevels.map(function (level, i) {
 	      var rank;
 	      switch (i) {

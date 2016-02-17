@@ -551,7 +551,7 @@ var AIButton = React.createClass({
   },
   render: function() {
     var myClass = this.state.idVal;
-    if (!this.props.showMe) myClass='';
+    if (this.props.numPlayers > 3 || !this.props.showMe) myClass='';
     return (
       <div>
         <canvas id={this.state.idVal} height={this.props.height} width={this.props.width} onClick={this._showAIs} className={myClass} />
