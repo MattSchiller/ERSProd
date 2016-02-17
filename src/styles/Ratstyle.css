@@ -266,10 +266,14 @@ h1 {
   align-items: flex-start;
 }
 
-.AI, .standUp {
+.AI, .standUp, .easy, .medium, .hard, .brutal {
   opacity: .75;
-  margin: inherit;
-  margin: 2px;
+}
+
+.aiLevels {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
 }
 
 .rulesIcon {
@@ -279,13 +283,14 @@ h1 {
   opacity: .75;
 }
 
-.rulesIcon:hover, .chatHandle:hover, .roomBox:hover, .sitDown:hover, .AI:hover, .standUp:hover, .settings:hover, .readyButton:hover {
-  border-color: #9ecaed;
+.rulesIcon:hover, .chatHandle:hover, .roomBox:hover, .sitDown:hover, .AI:hover, .standUp:hover, .settings:hover, .readyButton:hover,
+  .easy:hover, .medium:hover, .hard:hover, .brutal:hover {
+  /*border-color: #9ecaed;*/
   box-shadow: 0 0 10px #9ecaed;
   opacity: 1;
   cursor: pointer;
 }
-.rulesIcon:hover, .settings:hover, .AI:hover, .standUp:hover {
+.rulesIcon:hover, .settings:hover, .AI:hover, .standUp:hover, .easy:hover, .medium:hover, .hard:hover, .brutal:hover {
   border-radius:2em;
 }
 

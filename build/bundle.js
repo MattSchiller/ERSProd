@@ -79,7 +79,6 @@
 	    return React.createElement('div', { className: myClass }, myCards);
 	  }
 	});
-
 	var CardImage = React.createClass({
 	  displayName: 'CardImage',
 
@@ -110,7 +109,6 @@
 	    return React.createElement('canvas', { id: this.props.box + this.props.pos, height: this.state.height * this.state.scale, width: this.state.width * this.state.scale, style: cardStyle });
 	  }
 	});
-
 	var GameTable = React.createClass({
 	  displayName: 'GameTable',
 
@@ -484,7 +482,6 @@
 	    };
 	  },
 	  componentDidMount: function componentDidMount() {
-	    console.log("Settings Mounted");
 	    var myCanvas = document.getElementById(this.props.idVal),
 	        myImage = new IconCanvas(myCanvas);
 	    myImage.drawSettings(this.state.color);
@@ -493,9 +490,8 @@
 	    this.setState({ showButtons: !this.state.showButtons });
 	  },
 	  render: function render() {
-	    console.log("Settings rendered");
-	    return React.createElement('div', null, React.createElement('canvas', { id: this.props.idVal, className: this.props.idVal, height: this.state.height, width: this.state.width, onClick: this._toggleSettings }), React.createElement('div', { className: 'subSettings' }, React.createElement(StandUpButton, { roomID: this.props.roomID, showMe: this.state.showButtons, idVal: 'standUp', height: this.state.height, width: this.state.width }), React.createElement(AIButton, { roomID: this.props.roomID, numPlayers: this.props.numPlayers, showMe: this.state.showButtons, color: this.state.color, idVal: 'AI',
-	      height: this.state.height, width: this.state.width, callBack: this._toggleSettings })));
+	    return React.createElement('div', null, React.createElement('canvas', { id: this.props.idVal, className: this.props.idVal, height: this.state.height, width: this.state.width, onClick: this._toggleSettings }), React.createElement('div', { className: 'subSettings' }, React.createElement(StandUpButton, { roomID: this.props.roomID, showMe: this.state.showButtons, height: this.state.height, width: this.state.width }), React.createElement(AIButton, { roomID: this.props.roomID, numPlayers: this.props.numPlayers, showMe: this.state.showButtons, color: this.state.color,
+	      height: this.state.height, width: this.state.width, cb: this._toggleSettings })));
 	  }
 	});
 	var StandUpButton = React.createClass({
@@ -504,11 +500,12 @@
 	  getInitialState: function getInitialState() {
 	    return { caption: 'X',
 	      color: '#E68A00',
+	      idVal: 'standUp',
 	      fontSize: 30
 	    };
 	  },
 	  componentWillReceiveProps: function componentWillReceiveProps(nextProps) {
-	    var myCanvas = document.getElementById(this.props.idVal),
+	    var myCanvas = document.getElementById(this.state.idVal),
 	        myImage = new IconCanvas(myCanvas);
 	    if (nextProps.showMe) myImage.drawSubSettings(this.state.caption, this.state.color, this.state.fontSize);else myImage.clear();
 	  },
@@ -517,35 +514,74 @@
 	    socket.emit('standUp', { roomID: this.props.roomID });
 	  },
 	  render: function render() {
-	    var myClass = this.props.idVal;
+	    var myClass = this.state.idVal;
 	    if (!this.props.showMe) myClass = '';
-	    return React.createElement('canvas', { id: this.props.idVal, height: this.props.height, width: this.props.width, onClick: this._sendStandUp, className: myClass });
+	    return React.createElement('canvas', { id: this.state.idVal, height: this.props.height, width: this.props.width, onClick: this._sendStandUp, className: myClass });
 	  }
 	});
-
 	var AIButton = React.createClass({
 	  displayName: 'AIButton',
 
 	  getInitialState: function getInitialState() {
 	    return { difficulty: 'hard',
+	      aiLevels: [['easy', 'green'], ['medium', 'yellow'], ['hard', 'orange'], ['brutal', 'red']],
+	      showAIs: false,
 	      caption: 'AI',
-	      fontSize: 30
+	      idVal: 'AI',
+	      fontSize: 28
 	    };
 	  },
 	  componentWillReceiveProps: function componentWillReceiveProps(nextProps) {
-	    var myCanvas = document.getElementById(this.props.idVal),
+	    var myCanvas = document.getElementById(this.state.idVal),
 	        myImage = new IconCanvas(myCanvas);
-	    if (nextProps.numPlayers < 2 && nextProps.showMe) myImage.drawSubSettings(this.state.caption, this.props.color, this.state.fontSize);else myImage.clear();
+	    if (nextProps.numPlayers < 4 && nextProps.showMe) myImage.drawSubSettings(this.state.caption, nextProps.color, this.state.fontSize);else myImage.clear();
 	  },
-	  _sendAIRequest: function _sendAIRequest() {
-	    console.log("Requesting an AI player");
-	    this.props.callBack();
-	    socket.emit('addAI', { roomID: this.props.roomID, difficulty: this.state.difficulty });
+	  _showAIs: function _showAIs() {
+	    if (!this.props.showMe) return;
+	    this.setState({ showAIs: !this.state.showAIs });
+	  },
+	  _toggleSubSettings: function _toggleSubSettings() {
+	    this._showAIs();
+	    this.props.cb();
 	  },
 	  render: function render() {
-	    var myClass = this.props.idVal;
-	    if (this.props.numPlayers > 1 || !this.props.showMe) myClass = '';
-	    return React.createElement('canvas', { id: this.props.idVal, height: this.props.height, width: this.props.width, onClick: this._sendAIRequest, className: myClass });
+	    var myClass = this.state.idVal;
+	    if (!this.props.showMe) myClass = '';
+	    return React.createElement('div', null, React.createElement('canvas', { id: this.state.idVal, height: this.props.height, width: this.props.width, onClick: this._showAIs, className: myClass }), React.createElement('div', { className: 'aiLevels' }, this.state.aiLevels.map(function (level, i) {
+	      var rank;
+	      switch (i) {
+	        case 0:
+	          rank = 'I';break;
+	        case 1:
+	          rank = 'II';break;
+	        case 2:
+	          rank = 'III';break;
+	        case 3:
+	          rank = 'IV';break;
+	      };
+	      return React.createElement(AIDifficulty, { difficulty: level[0], color: level[1], key: i, rank: rank, height: this.props.height * 0.9, roomID: this.props.roomID,
+	        width: this.props.width * 0.9, cb: this._toggleSubSettings, fontSize: this.state.fontSize * 0.9, showMe: this.state.showAIs && this.props.showMe });
+	    }.bind(this))));
+	  }
+	});
+	var AIDifficulty = React.createClass({
+	  displayName: 'AIDifficulty',
+
+	  componentWillReceiveProps: function componentWillReceiveProps(nextProps) {
+	    var myCanvas = document.getElementById(nextProps.difficulty),
+	        myImage = new IconCanvas(myCanvas);
+	    if (nextProps.showMe) myImage.drawSubSettings(nextProps.rank, nextProps.color, nextProps.fontSize);else myImage.clear();
+	  },
+	  _sendAIRequest: function _sendAIRequest() {
+	    if (!this.props.showMe) return;
+	    console.log("Requesting an AI player, difficulty:", this.props.difficulty);
+	    this.props.cb();
+	    socket.emit('addAI', { roomID: this.props.roomID, difficulty: this.props.difficulty });
+	  },
+	  render: function render() {
+	    var myClass = this.props.difficulty;
+	    if (!this.props.showMe) myClass = '';
+	    return React.createElement('canvas', { id: this.props.difficulty, height: this.props.height, width: this.props.width, onClick: this._sendAIRequest, className: myClass });
 	  }
 	});
 	var Rules = React.createClass({
@@ -886,12 +922,12 @@
 	        cy = canvas.height / 2;
 
 	    var drawRules = function drawRules(text, color) {
-	        console.log("Drawing Rules");
-	        var radius = cx - 1,
-	            fontSize = 45;
+	        var radius = cx - 2,
+	            fontSize = 45,
+	            pi2 = 2 * Math.PI;
 	        context.beginPath();
-	        context.arc(cx, cy, radius, 0, 2 * Math.PI, false);
-	        context.lineWidth = 2;
+	        context.arc(cx, cy, radius, 0, pi2, false);
+	        context.lineWidth = 3.5;
 	        context.strokeStyle = color;
 	        context.stroke();
 	        context.font = "bold " + fontSize + "px Times New Roman";
@@ -900,16 +936,15 @@
 	        context.fillText(text, canvas.width / 2, canvas.height / 1.4);
 	    };
 
-	    var drawSubSettings = function drawSubSettings(text, color, newFontSize) {
-	        console.log("Drawing Rules");
-	        var radius = cx - 1,
-	            fontSize = 45;
+	    var drawSubSettings = function drawSubSettings(text, color, fontSize) {
+	        var radius = cx - 2,
+	            pi2 = 2 * Math.PI;
 	        context.beginPath();
-	        context.arc(cx, cy, radius, 0, 2 * Math.PI, false);
-	        context.lineWidth = 2;
+	        context.arc(cx, cy, radius, 0, pi2, false);
+	        context.lineWidth = 3.5;
 	        context.strokeStyle = color;
 	        context.stroke();
-	        context.font = "bold " + newFontSize + "px Times New Roman";
+	        context.font = "bold " + fontSize + "px Times New Roman";
 	        context.textAlign = 'center';
 	        context.fillStyle = color;
 	        context.fillText(text, canvas.width / 2, canvas.height / 1.4);
@@ -921,7 +956,7 @@
 	        var notches = 7,
 
 	        // num. of notches
-	        radiusCir = cx - 1,
+	        radiusCir = cx - 2,
 
 	        //radius of ring around icon
 	        radiusO = 0.72 * cx,
@@ -1003,7 +1038,7 @@
 	        //Draw ring around icon
 	        context.beginPath();
 	        context.arc(cx, cy, radiusCir, 0, 2 * Math.PI, false);
-	        context.lineWidth = 2;
+	        context.lineWidth = 3.5;
 	        context.strokeStyle = color;
 	        context.stroke();
 	    };

@@ -2,19 +2,19 @@
 var CardLogic = require('./CardLogic.js');
 
 function AI (serverPath, name, roomID, difficulty) {
-  this.name = name;
+  this.name = name+' ('+difficulty+')';
   this.roomID = roomID;
   this.difficulty = difficulty;
   this.hurdle = [];
   this.hurdle['easy'] = 0.7;      //Probability of not slapping when pile is slappable
   this.hurdle['medium'] = 0.45;
   this.hurdle['hard'] = 0.15;
-  this.hurdle['insane'] = 0.05;
+  this.hurdle['brutal'] = 0.05;
   this.speed = [];
   this.speed['easy'] = 1500;      //Time in ms
   this.speed['medium'] = 1000;
   this.speed['hard'] = 500;
-  this.speed['insane'] = 300;
+  this.speed['brutal'] = 300;
   this.cL = new CardLogic();
   
   var io = require('socket.io-client');

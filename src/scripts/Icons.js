@@ -4,12 +4,12 @@ var IconCanvas = (function (canvas) {
       cy = canvas.height / 2;
   
   var drawRules = function(text, color){
-    console.log("Drawing Rules");
-    var radius = cx-1,
-        fontSize = 45;
+    var radius = cx-2,
+        fontSize = 45,
+        pi2 = 2 * Math.PI;
     context.beginPath();
-    context.arc(cx, cy, radius, 0, 2 * Math.PI, false);
-    context.lineWidth = 2;
+    context.arc(cx, cy, radius, 0, pi2, false);
+    context.lineWidth = 3.5;
     context.strokeStyle = color;
     context.stroke();
     context.font = "bold "+fontSize+"px Times New Roman";
@@ -18,16 +18,15 @@ var IconCanvas = (function (canvas) {
     context.fillText(text, canvas.width/2, canvas.height/(1.4));
   };
   
-  var drawSubSettings = function(text, color, newFontSize){
-    console.log("Drawing Rules");
-    var radius = cx-1,
-        fontSize = 45;
+  var drawSubSettings = function(text, color, fontSize){
+    var radius = cx-2,
+        pi2 = 2 * Math.PI;
     context.beginPath();
-    context.arc(cx, cy, radius, 0, 2 * Math.PI, false);
-    context.lineWidth = 2;
+    context.arc(cx, cy, radius, 0, pi2, false);
+    context.lineWidth = 3.5;
     context.strokeStyle = color;
     context.stroke();
-    context.font = "bold "+newFontSize+"px Times New Roman";
+    context.font = "bold "+fontSize+"px Times New Roman";
     context.textAlign = 'center';
     context.fillStyle = color;
     context.fillText(text, canvas.width/2, canvas.height/1.4);
@@ -37,7 +36,7 @@ var IconCanvas = (function (canvas) {
   // Copyright (C) Ken Fyrstenberg / Epistemex
   // MIT license (header required)
     var notches = 7,                   // num. of notches
-        radiusCir = cx-1,        //radius of ring around icon
+        radiusCir = cx-2,        //radius of ring around icon
         radiusO = 0.72*cx,    // outer radius
         radiusI = 0.6*cx,     // inner radius
         radiusH = cx/3,                // hole radius
@@ -97,7 +96,7 @@ var IconCanvas = (function (canvas) {
     //Draw ring around icon
     context.beginPath();
     context.arc(cx, cy, radiusCir, 0, 2 * Math.PI, false);
-    context.lineWidth = 2;
+    context.lineWidth = 3.5;
     context.strokeStyle = color;
     context.stroke();
   };

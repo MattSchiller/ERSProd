@@ -29,7 +29,6 @@ var CardBox = React.createClass({
     );
   }
 });
-
 var CardImage = React.createClass({
   getInitialState: function() {
     var boxScale = 1;
@@ -61,7 +60,6 @@ var CardImage = React.createClass({
       );
   }
 });
-
 var GameTable = React.createClass({
   _transformPlayers: function() {
     var newPlayers = [],
@@ -493,9 +491,9 @@ var Settings = React.createClass({
       <div>
         <canvas id={this.props.idVal} className={this.props.idVal} height={this.state.height} width={this.state.width} onClick={this._toggleSettings}/>
         <div className='subSettings'>
-          <StandUpButton roomID={this.props.roomID} showMe={this.state.showButtons} idVal='standUp' height={this.state.height} width={this.state.width}/>
-          <AIButton roomID={this.props.roomID}  numPlayers={this.props.numPlayers} showMe={this.state.showButtons} color={this.state.color} idVal='AI'
-            height={this.state.height} width={this.state.width} callBack={this._toggleSettings}/>
+          <StandUpButton roomID={this.props.roomID} showMe={this.state.showButtons} height={this.state.height} width={this.state.width}/>
+          <AIButton roomID={this.props.roomID}  numPlayers={this.props.numPlayers} showMe={this.state.showButtons} color={this.state.color}
+            height={this.state.height} width={this.state.width} cb={this._toggleSettings}/>
         </div>
       </div>
     );
@@ -505,11 +503,12 @@ var StandUpButton = React.createClass({
   getInitialState: function() {
     return {caption: 'X',
             color: '#E68A00',
+            idVal:'standUp',
             fontSize: 30
     };
   },
   componentWillReceiveProps: function(nextProps) {
-    var myCanvas=document.getElementById(this.props.idVal),
+    var myCanvas=document.getElementById(this.state.idVal),
         myImage = new IconCanvas(myCanvas);
     if (nextProps.showMe) myImage.drawSubSettings(this.state.caption, this.state.color, this.state.fontSize);
     else myImage.clear();
@@ -519,38 +518,80 @@ var StandUpButton = React.createClass({
     socket.emit('standUp', {roomID: this.props.roomID});
   },
   render: function() {
-    var myClass = this.props.idVal;
+    var myClass = this.state.idVal;
     if (!this.props.showMe) myClass='';
     return (
-      <canvas id={this.props.idVal} height={this.props.height} width={this.props.width} onClick={this._sendStandUp} className={myClass} />
+      <canvas id={this.state.idVal} height={this.props.height} width={this.props.width} onClick={this._sendStandUp} className={myClass} />
     );
   }
 });
-
-
 var AIButton = React.createClass({
   getInitialState: function() {
     return {difficulty:'hard',
+            aiLevels: [['easy','green'], ['medium','yellow'], ['hard','orange'], ['brutal','red']],
+            showAIs: false,
             caption: 'AI',
+            idVal: 'AI',
             fontSize: 28
     };
   },
   componentWillReceiveProps: function(nextProps) {
-    var myCanvas=document.getElementById(this.props.idVal),
+    var myCanvas=document.getElementById(this.state.idVal),
         myImage = new IconCanvas(myCanvas);
-    if (nextProps.numPlayers<2 && nextProps.showMe) myImage.drawSubSettings(this.state.caption, this.props.color, this.state.fontSize);
+    if (nextProps.numPlayers<4 && nextProps.showMe) myImage.drawSubSettings(this.state.caption, nextProps.color, this.state.fontSize);
+    else myImage.clear()
+  },
+  _showAIs: function(){
+    if (!this.props.showMe) return;
+    this.setState({showAIs:!this.state.showAIs});
+  },
+  _toggleSubSettings: function() {
+    this._showAIs();
+    this.props.cb();
+  },
+  render: function() {
+    var myClass = this.state.idVal;
+    if (!this.props.showMe) myClass='';
+    return (
+      <div>
+        <canvas id={this.state.idVal} height={this.props.height} width={this.props.width} onClick={this._showAIs} className={myClass} />
+        <div className={'aiLevels'}>{ 
+          this.state.aiLevels.map(function(level,i) {
+            var rank;
+            switch (i){
+              case 0: rank='I'; break;
+              case 1: rank='II'; break;
+              case 2: rank='III'; break;
+              case 3: rank='IV'; break;
+            };
+            return (
+              <AIDifficulty difficulty={level[0]} color={level[1]} key={i} rank={rank} height={this.props.height*0.9} roomID={this.props.roomID}
+                width={this.props.width*0.9} cb={this._toggleSubSettings} fontSize={this.state.fontSize*0.9} showMe={(this.state.showAIs && this.props.showMe)} />
+            );
+          }.bind(this) )
+        }</div> 
+      </div>
+    );
+  }
+});
+var AIDifficulty = React.createClass({
+  componentWillReceiveProps: function(nextProps) {
+    var myCanvas=document.getElementById(nextProps.difficulty),
+        myImage = new IconCanvas(myCanvas);
+    if (nextProps.showMe) myImage.drawSubSettings(nextProps.rank, nextProps.color, nextProps.fontSize);
     else myImage.clear();
   },
   _sendAIRequest: function() {
-    console.log("Requesting an AI player");
-    this.props.callBack();
-    socket.emit('addAI', {roomID:this.props.roomID, difficulty:this.state.difficulty});
+    if (!this.props.showMe) return;
+    console.log("Requesting an AI player, difficulty:",this.props.difficulty);
+    this.props.cb();
+    socket.emit('addAI', {roomID:this.props.roomID, difficulty:this.props.difficulty});
   },
   render: function() {
-    var myClass = this.props.idVal;
-    if (this.props.numPlayers>1 || !this.props.showMe) myClass='';
+    var myClass = this.props.difficulty;
+    if (!this.props.showMe) myClass='';
     return (
-      <canvas id={this.props.idVal} height={this.props.height} width={this.props.width} onClick={this._sendAIRequest} className={myClass} />
+       <canvas id={this.props.difficulty} height={this.props.height} width={this.props.width} onClick={this._sendAIRequest} className={myClass} /> 
     );
   }
 });

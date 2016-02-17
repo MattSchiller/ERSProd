@@ -57,6 +57,7 @@ function GameRoom(){
   this.id=Date.now();
   this.users=[];
   this.numAI=0;
+  this.gameActive=false;
 }
 function sendGameState(socket, ios, mRI, toAll){
   console.log("Sending game state to room index:", mRI);
@@ -91,6 +92,7 @@ function emitWinner(socket, ios, mRI){
   //Someone has won! Time to reset the game
   console.log("emitWinner, mRI:",mRI);
   emitMessage(serverName, ios, mRI, gameRooms[mRI].gL.getName(socket)+" has won! Reseting the game...", true);
+  gameRooms[mRI].gameActive=false;
   setTimeout(function(){                          //Intending to reset the game;
     if (gameRooms[mRI]===undefined) return;       //Room has already somehow been emptied of all users and spliced
     gameRooms[mRI].gL.resetGame();
@@ -253,8 +255,8 @@ ios.sockets.on('connection', function(socket){
     if (mRI===false) {console.log("There was a problem in finding the roomID specified (name)"); return;}
     console.log("Username",data.name,"attempted to add to roster");
     sitDown(socket, ios, mRI, data.name);
-    sendGameState(socket, ios, mRI, true);
     sendButtonStatus(socket, ios, mRI, !gameRooms[mRI].gL.readyForReady());
+    sendGameState(socket, ios, mRI, true);
     sendRoomsList(socket, ios, true);
   });
   socket.on('standUp', function(data){
@@ -292,12 +294,14 @@ ios.sockets.on('connection', function(socket){
       sendButtonStatus(socket, ios, mRI, true);
       sendGameState(socket, ios, mRI, true);
       emitMessage(serverName, ios, mRI, "Everyone's ready, let's begin!", true);
+      gameRooms[mRI].gameActive=true;
     }
   });
   socket.on('flip', function(data){
     var flipResult, mRI;
     mRI=findRoomIndex(data.roomID);
     if (mRI===false) {console.log("There was a problem in finding the roomID specified (flip)"); return;}
+    if (gameRooms[mRI].gameActive=false) {console.log("Game room not active, ignoring flip"); return;}
     console.log("Received a flip message from: "+gameRooms[mRI].gL.getName(socket));
     flipResult = gameRooms[mRI].gL.flip(socket);
     if (flipResult.msg==="") return;                                                    //To ignore spamming when it's not the player's turn
@@ -311,6 +315,7 @@ ios.sockets.on('connection', function(socket){
     var slapOutcome, mRI;
     mRI=findRoomIndex(data.roomID);
     if (mRI===false) {console.log("There was a problem in finding the roomID specified (slap)"); return;}
+    if (gameRooms[mRI].gameActive=false) {console.log("Game room not active, ignoring slap"); return;}
     console.log("Received slap message from:",gameRooms[mRI].gL.getName(socket));
     slapOutcome=gameRooms[mRI].gL.slap(socket);
     console.log("slapOutcome:",slapOutcome);

@@ -357,7 +357,7 @@ RS.prototype.addAI=function(serverPath, roomID, difficulty){
     return false;
   }
   console.log("AI player being added to the bots roster.");
-  this.myBots.push(new this.AI(serverPath, 'AI Player', roomID, difficulty));
+  this.myBots.push(new this.AI(serverPath, 'AI-'+(this.myBots.length+1), roomID, difficulty));
   return true;
 };
 RS.prototype.passReady=function(socket, readiness){
