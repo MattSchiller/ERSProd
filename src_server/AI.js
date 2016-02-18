@@ -6,15 +6,20 @@ function AI (serverPath, name, roomID, difficulty) {
   this.roomID = roomID;
   this.difficulty = difficulty;
   this.hurdle = [];
-  this.hurdle['easy'] = 0.7;      //Probability of not slapping when pile is slappable
-  this.hurdle['medium'] = 0.45;
-  this.hurdle['hard'] = 0.15;
-  this.hurdle['brutal'] = 0.05;
+    this.hurdle['easy'] = 0.7;      //Probability of not slapping when pile is slappable
+    this.hurdle['medium'] = 0.45;
+    this.hurdle['hard'] = 0.15;
+    this.hurdle['brutal'] = 0.05;
   this.speed = [];
-  this.speed['easy'] = 1500;      //Time in ms
-  this.speed['medium'] = 1000;
-  this.speed['hard'] = 500;
-  this.speed['brutal'] = 300;
+    this.speed['easy'] = 1500;      //Time in ms
+    this.speed['medium'] = 1000;
+    this.speed['hard'] = 500;
+    this.speed['brutal'] = 300;
+  this.misslap = [];
+    this.misslap['easy'] = 0.05;      //Probability of slapping when pile is NOT slappable
+    this.misslap['medium'] = 0.03;
+    this.misslap['hard'] = 0.01;
+    this.misslap['brutal'] = 0.005;
   this.cL = new CardLogic();
   
   var io = require('socket.io-client');
@@ -59,6 +64,16 @@ function AI (serverPath, name, roomID, difficulty) {
           if (that.center===slappableCenter) that.socket.emit('slap', {roomID:that.roomID});
         }, (this.speed[this.difficulty] * (Math.random()+0.5) ) );                //Slap delay = speed[]*(.5<->1.5) for some unpredictability
         return;     //Don't want to ALSO send a flip notice that would otherwise block the AI's own slap
+      }
+      if ( (!isSlappable) && (Math.random() <=this.misslap[this.difficulty]) ) {  //AI will misslap
+        console.log('AI will slap');
+        slappableCenter = data.center;
+        setTimeout(function(){
+          //Need to check if the center pile has changed since we decided to slap
+          if (that.center===slappableCenter) that.socket.emit('slap', {roomID:that.roomID});
+        }, (this.speed[this.difficulty] * (Math.random()+0.2) ) );                //Slap delay = speed[]*(.2<->1.2) for some unpredictability
+        return;     //Don't want to ALSO send a flip notice that would otherwise block the AI's own slap
+        
       }
     }
     //FLIP BEHAVIOR

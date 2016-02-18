@@ -773,7 +773,7 @@ var RuleExample= React.createClass({
   render: function(){
     return (
       <div className={this.props.className} onClick={this._ruleToggle}>
-        <b>{this.props.title}</b>:{this.props.caption}<br/>
+        <span className='controls'>{this.props.title}</span>:{this.props.caption}<br/>
         {this.props.cardArray}
       </div>
       );
