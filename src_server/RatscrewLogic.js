@@ -424,5 +424,8 @@ RS.prototype.readyForReady=function(){
   if (this.gameRunning || this.players.length<=1) return false;
   return true;
 };
+RS.prototype.getMaxPlayers=function(){
+  return this.maxPlayers;
+};
 
 module.exports = RS;

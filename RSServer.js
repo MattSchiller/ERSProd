@@ -122,7 +122,7 @@ function sendRoomsList(socket, ios, toAll){
   var tempArray=[];
   for(var z=0;z<gameRooms.length;z++){
     console.log("sendingRoomsList, arraying gameRooms; z=",z,"gameRooms.length:",gameRooms.length,"AIs:",gameRooms[z].numAI);
-    tempArray.push({name:roomPrefix+(z+1), id: gameRooms[z].id, numPlayers:gameRooms[z].gL.gameState().length});
+    tempArray.push({name:roomPrefix+(z+1), id: gameRooms[z].id, numPlayers:gameRooms[z].gL.gameState().length, max:gameRooms[z].gL.getMaxPlayers()});
   }
   if (toAll) ios.sockets.emit('roomsList', {roomsList:tempArray});
   else socket.emit('roomsList', {roomsList:tempArray});

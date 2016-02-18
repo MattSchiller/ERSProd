@@ -3,7 +3,7 @@ var IconCanvas = (function (canvas) {
       cx = canvas.width / 2,
       cy = canvas.height / 2;
   
-  var drawRules = function(text, color){
+  /*var drawRules = function(text, color){
     var radius = cx-2,
         fontSize = 45,
         pi2 = 2 * Math.PI;
@@ -12,13 +12,13 @@ var IconCanvas = (function (canvas) {
     context.lineWidth = 3.5;
     context.strokeStyle = color;
     context.stroke();
-    context.font = "bold "+fontSize+"px Times New Roman";
+    context.font = "bold "+fontSize+"px "+customFont;
     context.textAlign = 'center';
     context.fillStyle = color;
     context.fillText(text, canvas.width/2, canvas.height/(1.4));
-  };
+  };*/
   
-  var drawSubSettings = function(text, color, fontSize){
+  var drawSubSettings = function(text, color, fontSize, customFont, offset){
     var radius = cx-2,
         pi2 = 2 * Math.PI;
     context.beginPath();
@@ -26,10 +26,10 @@ var IconCanvas = (function (canvas) {
     context.lineWidth = 3.5;
     context.strokeStyle = color;
     context.stroke();
-    context.font = "bold "+fontSize+"px Times New Roman";
+    context.font = fontSize+"px "+customFont;
     context.textAlign = 'center';
     context.fillStyle = color;
-    context.fillText(text, canvas.width/2, canvas.height/1.4);
+    context.fillText(text, (canvas.width/2)*0.97, canvas.height/(1.37+offset));
   };
   
   var drawSettings = function(color) {
@@ -106,7 +106,7 @@ var IconCanvas = (function (canvas) {
   };
   
   return {
-    drawRules: drawRules,
+    //drawRules: drawRules,
     drawSettings: drawSettings,
     drawSubSettings: drawSubSettings,
     clear: clear

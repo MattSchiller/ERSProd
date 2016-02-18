@@ -1,4 +1,6 @@
-var socket;
+var socket,
+    customFont = 'Orbitron, sans-serif',
+    tooltipConst = 'tooltip2';
 
 var CardCanvas = require('./Suits.js');
 
@@ -39,7 +41,7 @@ var CardImage = React.createClass({
   componentDidMount: function() {
     var myCanvas = document.getElementById(this.props.box+this.props.pos),
         myImage = new CardCanvas(myCanvas);
-    myImage.drawCard(this.props.value);
+    myImage.drawCard(this.props.value, customFont);
   },
   _rescaleCard: function(newScale) {
     this.setState({scale:newScale});
@@ -91,7 +93,7 @@ var GameTable = React.createClass({
         <CardBox cards={this.props.gameInfo.center} players={this.props.gameInfo.players} box="center"/>
         <ReadyButton myPlayerID={this.props.gameInfo.myPlayerID} roomID={this.props.gameInfo.roomID} />
         <SitDownButton myPlayerID={this.props.gameInfo.myPlayerID} roomID={this.props.gameInfo.roomID} />
-        <SelfBox player={this.props.gameInfo.players[this._findMyIndex()]} curr={this.props.gameInfo.curr} roomID={this.props.gameInfo.roomID} numPlayers={this.props.gameInfo.players.length}/>
+        <SelfBox player={this.props.gameInfo.players[this._findMyIndex()]} curr={this.props.gameInfo.curr} roomID={this.props.gameInfo.roomID} numPlayers={this.props.gameInfo.players.length} max={this.props.max}/>
       </div>
     );
   }
@@ -140,7 +142,7 @@ var SelfBox = React.createClass({
     return (
       <div className='self'>
         <SinglePlayer player={this.props.player} curr={this.props.curr} className='mainTheme'/>
-        <Settings roomID={this.props.roomID} numPlayers={this.props.numPlayers} idVal='settings' />
+        <Settings roomID={this.props.roomID} numPlayers={this.props.numPlayers} idVal='settings' max={this.props.max}/>
       </div>
       )
   }
@@ -174,7 +176,7 @@ var SingleRoom = React.createClass({
   render: function() {
     return (
       <div className={"singleRoom"} >
-        <GameTable gameInfo={this.props} />
+        <GameTable gameInfo={this.props} max={this.props.max}/>
         <Chat players={this.props.players} roomID={this.props.roomID} />
         <Rules rules={this.props.rules} roomID={this.props.roomID} />
       </div>
@@ -231,10 +233,11 @@ var ClientUI = React.createClass({
         <RoomBox roomsList={this.state.roomsList} myRoom={this.state.roomID} />
         );
     } else {
+      var roomMax=this.state.roomsList[0].max;
       return (
         <div>
           <RoomBox roomsList={this.state.roomsList} myRoom={this.state.roomID} />
-          <SingleRoom players={this.state.players} curr={this.state.curr} penalty={this.state.penalty} center={this.state.center} roomID={this.state.roomID} myPlayerID={this.state.myPlayerID} rules={this.state.rules} />
+          <SingleRoom players={this.state.players} curr={this.state.curr} penalty={this.state.penalty} center={this.state.center} roomID={this.state.roomID} myPlayerID={this.state.myPlayerID} rules={this.state.rules} max={roomMax}/>
         </div>
         );
     }
@@ -261,7 +264,7 @@ var RoomBox = React.createClass({
     allRooms.push(<Room name={"New Room"} playerDisplay={""} isMyRoom={this.props.myRoom===undefined} isOpen={this.state.open} key={-1}/>);
     allRooms.push(this.props.roomsList.map(function(room,i) {
       return(
-        <Room name={room.name} id={room.id} playerDisplay={room.numPlayers + "/4"} isMyRoom={this.props.myRoom===room.id} isOpen={this.state.open} key={i}/>
+        <Room name={room.name} id={room.id} playerDisplay={"["+room.numPlayers+"/"+room.max+"]"} isMyRoom={this.props.myRoom===room.id} isOpen={this.state.open} key={i}/>
       );
     }.bind(this))
     );
@@ -487,13 +490,17 @@ var Settings = React.createClass({
     this.setState({showButtons:!this.state.showButtons});
   },
   render: function() {
+    var tooltipClass=tooltipConst;
+    if (this.state.showButtons) tooltipClass='';
     return (
       <div>
-        <canvas id={this.props.idVal} className={this.props.idVal} height={this.state.height} width={this.state.width} onClick={this._toggleSettings}/>
+        <div className={tooltipClass} data-title='Settings' title-width='150px'>
+          <canvas id={this.props.idVal} className={this.props.idVal} height={this.state.height} width={this.state.width} onClick={this._toggleSettings}/>
+        </div>
         <div className='subSettings'>
-          <StandUpButton roomID={this.props.roomID} showMe={this.state.showButtons} height={this.state.height} width={this.state.width}/>
+          <StandUpButton roomID={this.props.roomID} showMe={this.state.showButtons} height={this.state.height*0.75} width={this.state.width*0.75}/>
           <AIButton roomID={this.props.roomID}  numPlayers={this.props.numPlayers} showMe={this.state.showButtons} color={this.state.color}
-            height={this.state.height} width={this.state.width} cb={this._toggleSettings}/>
+            height={this.state.height*0.9} width={this.state.width*0.9} cb={this._toggleSettings} max={this.props.max}/>
         </div>
       </div>
     );
@@ -504,13 +511,13 @@ var StandUpButton = React.createClass({
     return {caption: 'X',
             color: '#E68A00',
             idVal:'standUp',
-            fontSize: 30
+            fontSize: 22.5
     };
   },
   componentWillReceiveProps: function(nextProps) {
     var myCanvas=document.getElementById(this.state.idVal),
         myImage = new IconCanvas(myCanvas);
-    if (nextProps.showMe) myImage.drawSubSettings(this.state.caption, this.state.color, this.state.fontSize);
+    if (nextProps.showMe) myImage.drawSubSettings(this.state.caption, this.state.color, this.state.fontSize, customFont, 0);
     else myImage.clear();
   },
   _sendStandUp: function() {
@@ -518,10 +525,16 @@ var StandUpButton = React.createClass({
     socket.emit('standUp', {roomID: this.props.roomID});
   },
   render: function() {
-    var myClass = this.state.idVal;
-    if (!this.props.showMe) myClass='';
+    var myClass = this.state.idVal,
+        tooltipClass = tooltipConst;
+    if (!this.props.showMe) {
+      myClass='';
+      tooltipClass = '';
+    }
     return (
-      <canvas id={this.state.idVal} height={this.props.height} width={this.props.width} onClick={this._sendStandUp} className={myClass} />
+      <div className={tooltipClass} data-title='Leave game' title-width='200px'>
+        <canvas id={this.state.idVal} height={this.props.height} width={this.props.width} onClick={this._sendStandUp} className={myClass} />
+      </div>
     );
   }
 });
@@ -532,13 +545,13 @@ var AIButton = React.createClass({
             showAIs: false,
             caption: 'AI',
             idVal: 'AI',
-            fontSize: 28
+            fontSize: 25.3
     };
   },
   componentWillReceiveProps: function(nextProps) {
     var myCanvas=document.getElementById(this.state.idVal),
         myImage = new IconCanvas(myCanvas);
-    if (nextProps.numPlayers<4 && nextProps.showMe) myImage.drawSubSettings(this.state.caption, nextProps.color, this.state.fontSize);
+    if (nextProps.numPlayers<this.props.max && nextProps.showMe) myImage.drawSubSettings(this.state.caption, nextProps.color, this.state.fontSize, customFont, 0);
     else myImage.clear()
   },
   _showAIs: function(){
@@ -550,26 +563,33 @@ var AIButton = React.createClass({
     this.props.cb();
   },
   render: function() {
-    var myClass = this.state.idVal;
-    if (this.props.numPlayers > 3 || !this.props.showMe) myClass='';
+    var myClass = this.state.idVal,
+        tooltipClass = tooltipConst;
+    if (this.state.showAIs || this.props.numPlayers >= this.props.max || !this.props.showMe) tooltipClass='';
+    if (this.props.numPlayers >= this.props.max || !this.props.showMe) {
+      myClass='';
+      tooltipClass='';
+    }
     return (
       <div>
-        <canvas id={this.state.idVal} height={this.props.height} width={this.props.width} onClick={this._showAIs} className={myClass} />
-        <div className={'aiLevels'}>{ 
+        <div className={tooltipClass} data-title='Add AI Player' title-width='400px'>
+          <canvas id={this.state.idVal} height={this.props.height} width={this.props.width} onClick={this._showAIs} className={myClass} />
+        </div>
+        <div className={'aiLevels'}>{
           this.state.aiLevels.map(function(level,i) {
             var rank;
             switch (i){
               case 0: rank='I'; break;
               case 1: rank='II'; break;
               case 2: rank='III'; break;
-              case 3: rank='IV'; break;
+              case 3: rank='IIII'; break;
             };
             return (
               <AIDifficulty difficulty={level[0]} color={level[1]} key={i} rank={rank} height={this.props.height*0.9} roomID={this.props.roomID}
                 width={this.props.width*0.9} cb={this._toggleSubSettings} fontSize={this.state.fontSize*0.9} showMe={(this.state.showAIs && this.props.showMe)} />
             );
           }.bind(this) )
-        }</div> 
+        }</div>
       </div>
     );
   }
@@ -578,7 +598,7 @@ var AIDifficulty = React.createClass({
   componentWillReceiveProps: function(nextProps) {
     var myCanvas=document.getElementById(nextProps.difficulty),
         myImage = new IconCanvas(myCanvas);
-    if (nextProps.showMe) myImage.drawSubSettings(nextProps.rank, nextProps.color, nextProps.fontSize);
+    if (nextProps.showMe) myImage.drawSubSettings(nextProps.rank, nextProps.color, nextProps.fontSize, customFont, 0);
     else myImage.clear();
   },
   _sendAIRequest: function() {
@@ -588,10 +608,16 @@ var AIDifficulty = React.createClass({
     socket.emit('addAI', {roomID:this.props.roomID, difficulty:this.props.difficulty});
   },
   render: function() {
-    var myClass = this.props.difficulty;
-    if (!this.props.showMe) myClass='';
+    var myClass = this.props.difficulty,
+        tooltipClass = tooltipConst;
+    if (!this.props.showMe) {
+      myClass='';
+      tooltipClass='';
+    }
     return (
-       <canvas id={this.props.difficulty} height={this.props.height} width={this.props.width} onClick={this._sendAIRequest} className={myClass} /> 
+      <div className={tooltipClass} data-title={this.props.difficulty} title-width='330px'>
+        <canvas id={this.props.difficulty} height={this.props.height} width={this.props.width} onClick={this._sendAIRequest} className={myClass} />
+      </div>
     );
   }
 });
@@ -600,13 +626,14 @@ var Rules = React.createClass({
     return {showRules:false,
             height:60,
             width: 60,
-            color: '#39B3C1'
+            color: '#39B3C1',
+            fontSize: 45
     };
   },
   componentDidMount: function() {
     var myCanvas = document.getElementById('rulesIcon'),
         myImage = new IconCanvas(myCanvas);
-    myImage.drawRules('?', this.state.color);
+    myImage.drawSubSettings('?', this.state.color, this.state.fontSize, customFont, -0.05);
     window.addEventListener('ruleChange', this._sendRules);
   },
   _toggleRules: function() {
@@ -622,7 +649,9 @@ var Rules = React.createClass({
   render: function() {
     return (
       <div>
-        <canvas id='rulesIcon' className="rulesIcon" height={this.state.height} width={this.state.width} onClick={this._toggleRules}/>
+        <div className='rulesBox tooltip' data-title='Click for rules'>
+          <canvas id='rulesIcon' className='rulesIcon' height={this.state.height} width={this.state.width} onClick={this._toggleRules}/>
+        </div>
         <RulesModal willShowMe={this.state.showRules} hide={this._hideRules} rules={this.props.rules} roomID={this.props.roomID}/>
       </div>
       );
@@ -702,7 +731,7 @@ var RulesModal = React.createClass({
         <div className={'rulesModal mainTheme'} >
           <span style={{fontSize:"17pt"}}><u><b>Rules of Egyptian Ratscrew:</b></u></span>
           <ul>
-            <li>The point of the game is to get all the cards. Players have two actions: flip <b>[TAB]</b> and slap <b>[SPACEBAR]</b>.
+            <li>The point of the game is to get all the cards. Players have two actions: flip <span className="controls">[TAB]</span> and slap <span className="controls">[SPACEBAR]</span>.
             </li><li>Starting with the first player to sit down, players flip the top card off their pile and place it face-up in the middle. If the card played is a number card, the next player puts down a card, too. This continues around the table until somebody puts down a face card <b>(J, Q, K, or A)</b>.
             </li><li>When a face card (aces are face cards!) is played, the next person in the sequence must flip another face card in the alloted number of chances in order for play to continue.
             </li><li><b>Chances provided: J -> 1, Q -> 2, K -> 3, A -> 4.</b>

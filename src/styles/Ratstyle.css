@@ -4,6 +4,7 @@ html {
   border-style: none;
   background-attachment: fixed;
   background-position: center;
+  font-family: 'Orbitron', sans-serif;
 }
 body {
   overflow: hidden;
@@ -11,14 +12,14 @@ body {
 h1 {
   color: white;
   text-align: center;
-  font-family: Verdana;
+  font-family: 'Orbitron', sans-serif;
   font-size: 18pt;
 }
 .mainTheme {
   border-style: solid;
   border-width: 2px;
   border-radius: 2px;
-  font-family: Verdana;
+  font-family: 'Orbitron', sans-serif;
 }
 .superLight {
   background-color: #B2D0CD;
@@ -49,6 +50,7 @@ h1 {
 }
 .roomBox {
   position: absolute;
+  padding: 2px;
   left: 70px;
   top: 45px;
   width: 130px;
@@ -58,6 +60,7 @@ h1 {
   border-color: #39B3C1;
   font-size: 13pt;
   align-self: flex-start;
+  color:#39B3C1;
 }
 
 .room {
@@ -276,10 +279,12 @@ h1 {
   align-items: flex-start;
 }
 
-.rulesIcon {
+.rulesBox {
   position: absolute;
   top: 11px;
   right: 11px;
+}
+.rulesIcon {
   opacity: .75;
 }
 
@@ -309,4 +314,47 @@ h1 {
 
 .ruleOff {
   background-color: maroon;
+}
+
+.controls {
+  color:#E68A00;
+  font-weight: bold;
+}
+
+.tooltip2{
+    display: inline;
+    position: relative;
+}
+
+.tooltip:hover:after, .tooltip2:hover:after{
+  background: #486260;
+  border-radius: 5px;
+  color: #B2D0CD;
+  content: attr(data-title);
+  padding: 5px 15px;
+  position: absolute;
+  z-index: 98;
+}
+
+.tooltip:hover:after{
+  bottom: -40%;
+  left: -310%;
+  width: 220px;
+}
+
+.tooltip2:hover:after{
+  bottom: -100%;
+  left: 50%;
+  width: attr(title-width);
+}
+
+.tooltip:hover:before{
+  border: solid;
+  border-color: #486260 transparent;
+  border-width: 0 10px 10px 10px;
+  content: "";
+  position: absolute;
+  z-index: 99;
+  top: 84%;
+  left: 30%;
 }

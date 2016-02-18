@@ -53,7 +53,9 @@
 
 	'use strict';
 
-	var socket;
+	var socket,
+	    customFont = 'Orbitron, sans-serif',
+	    tooltipConst = 'tooltip2';
 
 	var CardCanvas = __webpack_require__(2);
 
@@ -90,7 +92,7 @@
 	  componentDidMount: function componentDidMount() {
 	    var myCanvas = document.getElementById(this.props.box + this.props.pos),
 	        myImage = new CardCanvas(myCanvas);
-	    myImage.drawCard(this.props.value);
+	    myImage.drawCard(this.props.value, customFont);
 	  },
 	  _rescaleCard: function _rescaleCard(newScale) {
 	    this.setState({ scale: newScale });
@@ -133,7 +135,7 @@
 	    return z;
 	  },
 	  render: function render() {
-	    return React.createElement('div', null, React.createElement('br', null), React.createElement(PlayersBox, { players: this._transformPlayers(), curr: this.props.gameInfo.curr }), React.createElement('br', null), React.createElement(CardBox, { cards: this.props.gameInfo.penalty, players: this.props.gameInfo.players, box: 'penalty' }), React.createElement(CardBox, { cards: this.props.gameInfo.center, players: this.props.gameInfo.players, box: 'center' }), React.createElement(ReadyButton, { myPlayerID: this.props.gameInfo.myPlayerID, roomID: this.props.gameInfo.roomID }), React.createElement(SitDownButton, { myPlayerID: this.props.gameInfo.myPlayerID, roomID: this.props.gameInfo.roomID }), React.createElement(SelfBox, { player: this.props.gameInfo.players[this._findMyIndex()], curr: this.props.gameInfo.curr, roomID: this.props.gameInfo.roomID, numPlayers: this.props.gameInfo.players.length }));
+	    return React.createElement('div', null, React.createElement('br', null), React.createElement(PlayersBox, { players: this._transformPlayers(), curr: this.props.gameInfo.curr }), React.createElement('br', null), React.createElement(CardBox, { cards: this.props.gameInfo.penalty, players: this.props.gameInfo.players, box: 'penalty' }), React.createElement(CardBox, { cards: this.props.gameInfo.center, players: this.props.gameInfo.players, box: 'center' }), React.createElement(ReadyButton, { myPlayerID: this.props.gameInfo.myPlayerID, roomID: this.props.gameInfo.roomID }), React.createElement(SitDownButton, { myPlayerID: this.props.gameInfo.myPlayerID, roomID: this.props.gameInfo.roomID }), React.createElement(SelfBox, { player: this.props.gameInfo.players[this._findMyIndex()], curr: this.props.gameInfo.curr, roomID: this.props.gameInfo.roomID, numPlayers: this.props.gameInfo.players.length, max: this.props.max }));
 	  }
 	});
 	var PlayersBox = React.createClass({
@@ -172,7 +174,7 @@
 
 	  render: function render() {
 	    if (this.props.player === undefined) return React.createElement('div', null);
-	    return React.createElement('div', { className: 'self' }, React.createElement(SinglePlayer, { player: this.props.player, curr: this.props.curr, className: 'mainTheme' }), React.createElement(Settings, { roomID: this.props.roomID, numPlayers: this.props.numPlayers, idVal: 'settings' }));
+	    return React.createElement('div', { className: 'self' }, React.createElement(SinglePlayer, { player: this.props.player, curr: this.props.curr, className: 'mainTheme' }), React.createElement(Settings, { roomID: this.props.roomID, numPlayers: this.props.numPlayers, idVal: 'settings', max: this.props.max }));
 	  }
 	});
 	var SingleRoom = React.createClass({
@@ -204,7 +206,7 @@
 	    window.removeEventListener('keydown', this._gameControls);
 	  },
 	  render: function render() {
-	    return React.createElement('div', { className: "singleRoom" }, React.createElement(GameTable, { gameInfo: this.props }), React.createElement(Chat, { players: this.props.players, roomID: this.props.roomID }), React.createElement(Rules, { rules: this.props.rules, roomID: this.props.roomID })); //
+	    return React.createElement('div', { className: "singleRoom" }, React.createElement(GameTable, { gameInfo: this.props, max: this.props.max }), React.createElement(Chat, { players: this.props.players, roomID: this.props.roomID }), React.createElement(Rules, { rules: this.props.rules, roomID: this.props.roomID })); //
 	  }
 	});
 	var ClientUI = React.createClass({
@@ -257,7 +259,8 @@
 	      console.log("No room yet, roomID:", this.state.roomID);
 	      return React.createElement(RoomBox, { roomsList: this.state.roomsList, myRoom: this.state.roomID });
 	    } else {
-	      return React.createElement('div', null, React.createElement(RoomBox, { roomsList: this.state.roomsList, myRoom: this.state.roomID }), React.createElement(SingleRoom, { players: this.state.players, curr: this.state.curr, penalty: this.state.penalty, center: this.state.center, roomID: this.state.roomID, myPlayerID: this.state.myPlayerID, rules: this.state.rules }));
+	      var roomMax = this.state.roomsList[0].max;
+	      return React.createElement('div', null, React.createElement(RoomBox, { roomsList: this.state.roomsList, myRoom: this.state.roomID }), React.createElement(SingleRoom, { players: this.state.players, curr: this.state.curr, penalty: this.state.penalty, center: this.state.center, roomID: this.state.roomID, myPlayerID: this.state.myPlayerID, rules: this.state.rules, max: roomMax }));
 	    }
 	  }
 	});
@@ -284,7 +287,7 @@
 	    var allRooms = [];
 	    allRooms.push(React.createElement(Room, { name: "New Room", playerDisplay: "", isMyRoom: this.props.myRoom === undefined, isOpen: this.state.open, key: -1 }));
 	    allRooms.push(this.props.roomsList.map(function (room, i) {
-	      return React.createElement(Room, { name: room.name, id: room.id, playerDisplay: room.numPlayers + "/4", isMyRoom: this.props.myRoom === room.id, isOpen: this.state.open, key: i });
+	      return React.createElement(Room, { name: room.name, id: room.id, playerDisplay: "[" + room.numPlayers + "/" + room.max + "]", isMyRoom: this.props.myRoom === room.id, isOpen: this.state.open, key: i });
 	    }.bind(this)));
 	    return React.createElement('div', { className: 'roomBox mainTheme darkerNeutral', onClick: this._toggleMenu }, this._findMyRoomName(), allRooms);
 	  }
@@ -490,8 +493,10 @@
 	    this.setState({ showButtons: !this.state.showButtons });
 	  },
 	  render: function render() {
-	    return React.createElement('div', null, React.createElement('canvas', { id: this.props.idVal, className: this.props.idVal, height: this.state.height, width: this.state.width, onClick: this._toggleSettings }), React.createElement('div', { className: 'subSettings' }, React.createElement(StandUpButton, { roomID: this.props.roomID, showMe: this.state.showButtons, height: this.state.height, width: this.state.width }), React.createElement(AIButton, { roomID: this.props.roomID, numPlayers: this.props.numPlayers, showMe: this.state.showButtons, color: this.state.color,
-	      height: this.state.height, width: this.state.width, cb: this._toggleSettings })));
+	    var tooltipClass = tooltipConst;
+	    if (this.state.showButtons) tooltipClass = '';
+	    return React.createElement('div', null, React.createElement('div', { className: tooltipClass, 'data-title': 'Settings', 'title-width': '150px' }, React.createElement('canvas', { id: this.props.idVal, className: this.props.idVal, height: this.state.height, width: this.state.width, onClick: this._toggleSettings })), React.createElement('div', { className: 'subSettings' }, React.createElement(StandUpButton, { roomID: this.props.roomID, showMe: this.state.showButtons, height: this.state.height * 0.75, width: this.state.width * 0.75 }), React.createElement(AIButton, { roomID: this.props.roomID, numPlayers: this.props.numPlayers, showMe: this.state.showButtons, color: this.state.color,
+	      height: this.state.height * 0.9, width: this.state.width * 0.9, cb: this._toggleSettings, max: this.props.max })));
 	  }
 	});
 	var StandUpButton = React.createClass({
@@ -501,22 +506,26 @@
 	    return { caption: 'X',
 	      color: '#E68A00',
 	      idVal: 'standUp',
-	      fontSize: 30
+	      fontSize: 22.5
 	    };
 	  },
 	  componentWillReceiveProps: function componentWillReceiveProps(nextProps) {
 	    var myCanvas = document.getElementById(this.state.idVal),
 	        myImage = new IconCanvas(myCanvas);
-	    if (nextProps.showMe) myImage.drawSubSettings(this.state.caption, this.state.color, this.state.fontSize);else myImage.clear();
+	    if (nextProps.showMe) myImage.drawSubSettings(this.state.caption, this.state.color, this.state.fontSize, customFont, 0);else myImage.clear();
 	  },
 	  _sendStandUp: function _sendStandUp() {
 	    console.log("Sending stand up notice");
 	    socket.emit('standUp', { roomID: this.props.roomID });
 	  },
 	  render: function render() {
-	    var myClass = this.state.idVal;
-	    if (!this.props.showMe) myClass = '';
-	    return React.createElement('canvas', { id: this.state.idVal, height: this.props.height, width: this.props.width, onClick: this._sendStandUp, className: myClass });
+	    var myClass = this.state.idVal,
+	        tooltipClass = tooltipConst;
+	    if (!this.props.showMe) {
+	      myClass = '';
+	      tooltipClass = '';
+	    }
+	    return React.createElement('div', { className: tooltipClass, 'data-title': 'Leave game', 'title-width': '200px' }, React.createElement('canvas', { id: this.state.idVal, height: this.props.height, width: this.props.width, onClick: this._sendStandUp, className: myClass }));
 	  }
 	});
 	var AIButton = React.createClass({
@@ -528,13 +537,13 @@
 	      showAIs: false,
 	      caption: 'AI',
 	      idVal: 'AI',
-	      fontSize: 28
+	      fontSize: 25.3
 	    };
 	  },
 	  componentWillReceiveProps: function componentWillReceiveProps(nextProps) {
 	    var myCanvas = document.getElementById(this.state.idVal),
 	        myImage = new IconCanvas(myCanvas);
-	    if (nextProps.numPlayers < 4 && nextProps.showMe) myImage.drawSubSettings(this.state.caption, nextProps.color, this.state.fontSize);else myImage.clear();
+	    if (nextProps.numPlayers < this.props.max && nextProps.showMe) myImage.drawSubSettings(this.state.caption, nextProps.color, this.state.fontSize, customFont, 0);else myImage.clear();
 	  },
 	  _showAIs: function _showAIs() {
 	    if (!this.props.showMe) return;
@@ -545,9 +554,14 @@
 	    this.props.cb();
 	  },
 	  render: function render() {
-	    var myClass = this.state.idVal;
-	    if (this.props.numPlayers > 3 || !this.props.showMe) myClass = '';
-	    return React.createElement('div', null, React.createElement('canvas', { id: this.state.idVal, height: this.props.height, width: this.props.width, onClick: this._showAIs, className: myClass }), React.createElement('div', { className: 'aiLevels' }, this.state.aiLevels.map(function (level, i) {
+	    var myClass = this.state.idVal,
+	        tooltipClass = tooltipConst;
+	    if (this.state.showAIs || this.props.numPlayers >= this.props.max || !this.props.showMe) tooltipClass = '';
+	    if (this.props.numPlayers >= this.props.max || !this.props.showMe) {
+	      myClass = '';
+	      tooltipClass = '';
+	    }
+	    return React.createElement('div', null, React.createElement('div', { className: tooltipClass, 'data-title': 'Add AI Player', 'title-width': '400px' }, React.createElement('canvas', { id: this.state.idVal, height: this.props.height, width: this.props.width, onClick: this._showAIs, className: myClass })), React.createElement('div', { className: 'aiLevels' }, this.state.aiLevels.map(function (level, i) {
 	      var rank;
 	      switch (i) {
 	        case 0:
@@ -557,7 +571,7 @@
 	        case 2:
 	          rank = 'III';break;
 	        case 3:
-	          rank = 'IV';break;
+	          rank = 'IIII';break;
 	      };
 	      return React.createElement(AIDifficulty, { difficulty: level[0], color: level[1], key: i, rank: rank, height: this.props.height * 0.9, roomID: this.props.roomID,
 	        width: this.props.width * 0.9, cb: this._toggleSubSettings, fontSize: this.state.fontSize * 0.9, showMe: this.state.showAIs && this.props.showMe });
@@ -570,7 +584,7 @@
 	  componentWillReceiveProps: function componentWillReceiveProps(nextProps) {
 	    var myCanvas = document.getElementById(nextProps.difficulty),
 	        myImage = new IconCanvas(myCanvas);
-	    if (nextProps.showMe) myImage.drawSubSettings(nextProps.rank, nextProps.color, nextProps.fontSize);else myImage.clear();
+	    if (nextProps.showMe) myImage.drawSubSettings(nextProps.rank, nextProps.color, nextProps.fontSize, customFont, 0);else myImage.clear();
 	  },
 	  _sendAIRequest: function _sendAIRequest() {
 	    if (!this.props.showMe) return;
@@ -579,9 +593,13 @@
 	    socket.emit('addAI', { roomID: this.props.roomID, difficulty: this.props.difficulty });
 	  },
 	  render: function render() {
-	    var myClass = this.props.difficulty;
-	    if (!this.props.showMe) myClass = '';
-	    return React.createElement('canvas', { id: this.props.difficulty, height: this.props.height, width: this.props.width, onClick: this._sendAIRequest, className: myClass });
+	    var myClass = this.props.difficulty,
+	        tooltipClass = tooltipConst;
+	    if (!this.props.showMe) {
+	      myClass = '';
+	      tooltipClass = '';
+	    }
+	    return React.createElement('div', { className: tooltipClass, 'data-title': this.props.difficulty, 'title-width': '330px' }, React.createElement('canvas', { id: this.props.difficulty, height: this.props.height, width: this.props.width, onClick: this._sendAIRequest, className: myClass }));
 	  }
 	});
 	var Rules = React.createClass({
@@ -591,13 +609,14 @@
 	    return { showRules: false,
 	      height: 60,
 	      width: 60,
-	      color: '#39B3C1'
+	      color: '#39B3C1',
+	      fontSize: 45
 	    };
 	  },
 	  componentDidMount: function componentDidMount() {
 	    var myCanvas = document.getElementById('rulesIcon'),
 	        myImage = new IconCanvas(myCanvas);
-	    myImage.drawRules('?', this.state.color);
+	    myImage.drawSubSettings('?', this.state.color, this.state.fontSize, customFont, -0.05);
 	    window.addEventListener('ruleChange', this._sendRules);
 	  },
 	  _toggleRules: function _toggleRules() {
@@ -611,7 +630,7 @@
 	    socket.emit('rule', { rule: e.detail, roomID: this.props.roomID });
 	  },
 	  render: function render() {
-	    return React.createElement('div', null, React.createElement('canvas', { id: 'rulesIcon', className: 'rulesIcon', height: this.state.height, width: this.state.width, onClick: this._toggleRules }), React.createElement(RulesModal, { willShowMe: this.state.showRules, hide: this._hideRules, rules: this.props.rules, roomID: this.props.roomID }));
+	    return React.createElement('div', null, React.createElement('div', { className: 'rulesBox tooltip', 'data-title': 'Click for rules' }, React.createElement('canvas', { id: 'rulesIcon', className: 'rulesIcon', height: this.state.height, width: this.state.width, onClick: this._toggleRules })), React.createElement(RulesModal, { willShowMe: this.state.showRules, hide: this._hideRules, rules: this.props.rules, roomID: this.props.roomID }));
 	  }
 	});
 	var RulesModal = React.createClass({
@@ -688,7 +707,7 @@
 	      if (this.props.rules.straight === false) straightClass = ruleOff;
 	      if (this.props.rules.bottomStack === false) bottomStackClass = ruleOff;
 	      return (//onClick={this.props.hide} onBlur={this.props.hide}
-	        React.createElement('div', { className: 'rulesModal mainTheme' }, React.createElement('span', { style: { fontSize: "17pt" } }, React.createElement('u', null, React.createElement('b', null, 'Rules of Egyptian Ratscrew:'))), React.createElement('ul', null, React.createElement('li', null, 'The point of the game is to get all the cards. Players have two actions: flip ', React.createElement('b', null, '[TAB]'), ' and slap ', React.createElement('b', null, '[SPACEBAR]'), '.'), React.createElement('li', null, 'Starting with the first player to sit down, players flip the top card off their pile and place it face-up in the middle. If the card played is a number card, the next player puts down a card, too. This continues around the table until somebody puts down a face card ', React.createElement('b', null, '(J, Q, K, or A)'), '.'), React.createElement('li', null, 'When a face card (aces are face cards!) is played, the next person in the sequence must flip another face card in the alloted number of chances in order for play to continue.'), React.createElement('li', null, React.createElement('b', null, 'Chances provided: J -> 1, Q -> 2, K -> 3, A -> 4.')), React.createElement('li', null, 'If the next person in the sequence does NOT play a face card within their allotted number of chances, the person who played the last face card wins the round and the whole pile goes to them. The winner begins the next round of play.'), React.createElement('li', null, 'The only thing that overrides the face card rule is the slap rule. If a slap pattern is present, no matter the status of the pile, the first person to slap is the winner of that round.'), React.createElement('li', null, 'If you slap and there is nothing to slap on, you lose two cards to the penalty pile (that the next pile winner will collect).')), React.createElement('ul', { type: "circle" }, React.createElement('b', null, React.createElement('u', null, 'Slappable Patterns:'), ' (click to toggle on/off)'), React.createElement('li', null, React.createElement(RuleExample, { className: doublesClass, type: 'doubles', title: 'Doubles', caption: ' any 2 cards of the same rank:', cardArray: doubles })), React.createElement('li', null, React.createElement(RuleExample, { className: sandwichClass, type: 'sandwich', title: 'Sandwich', caption: ' 2 cards of the same rank with 1 card between them:', cardArray: sandwich })), React.createElement('li', null, React.createElement(RuleExample, { className: flushClass, type: 'flush', title: 'Flush', caption: ' 3 cards in a row of the same suit:', cardArray: flush })), React.createElement('li', null, React.createElement(RuleExample, { className: straightClass, type: 'straight', title: 'Straight', caption: ' 3 cards in a row of ascending or descending ranks, no \'Ace wrap-a-rounds\':', cardArray: straight })), React.createElement('li', null, React.createElement(RuleExample, { className: bottomStackClass, type: 'bottomStack', title: 'Bottom-stack', caption: ' a \'super sandwich\' with the top card and the bottom card of the whole stack of the same rank:', cardArray: bottomstack }))))
+	        React.createElement('div', { className: 'rulesModal mainTheme' }, React.createElement('span', { style: { fontSize: "17pt" } }, React.createElement('u', null, React.createElement('b', null, 'Rules of Egyptian Ratscrew:'))), React.createElement('ul', null, React.createElement('li', null, 'The point of the game is to get all the cards. Players have two actions: flip ', React.createElement('span', { className: 'controls' }, '[TAB]'), ' and slap ', React.createElement('span', { className: 'controls' }, '[SPACEBAR]'), '.'), React.createElement('li', null, 'Starting with the first player to sit down, players flip the top card off their pile and place it face-up in the middle. If the card played is a number card, the next player puts down a card, too. This continues around the table until somebody puts down a face card ', React.createElement('b', null, '(J, Q, K, or A)'), '.'), React.createElement('li', null, 'When a face card (aces are face cards!) is played, the next person in the sequence must flip another face card in the alloted number of chances in order for play to continue.'), React.createElement('li', null, React.createElement('b', null, 'Chances provided: J -> 1, Q -> 2, K -> 3, A -> 4.')), React.createElement('li', null, 'If the next person in the sequence does NOT play a face card within their allotted number of chances, the person who played the last face card wins the round and the whole pile goes to them. The winner begins the next round of play.'), React.createElement('li', null, 'The only thing that overrides the face card rule is the slap rule. If a slap pattern is present, no matter the status of the pile, the first person to slap is the winner of that round.'), React.createElement('li', null, 'If you slap and there is nothing to slap on, you lose two cards to the penalty pile (that the next pile winner will collect).')), React.createElement('ul', { type: "circle" }, React.createElement('b', null, React.createElement('u', null, 'Slappable Patterns:'), ' (click to toggle on/off)'), React.createElement('li', null, React.createElement(RuleExample, { className: doublesClass, type: 'doubles', title: 'Doubles', caption: ' any 2 cards of the same rank:', cardArray: doubles })), React.createElement('li', null, React.createElement(RuleExample, { className: sandwichClass, type: 'sandwich', title: 'Sandwich', caption: ' 2 cards of the same rank with 1 card between them:', cardArray: sandwich })), React.createElement('li', null, React.createElement(RuleExample, { className: flushClass, type: 'flush', title: 'Flush', caption: ' 3 cards in a row of the same suit:', cardArray: flush })), React.createElement('li', null, React.createElement(RuleExample, { className: straightClass, type: 'straight', title: 'Straight', caption: ' 3 cards in a row of ascending or descending ranks, no \'Ace wrap-a-rounds\':', cardArray: straight })), React.createElement('li', null, React.createElement(RuleExample, { className: bottomStackClass, type: 'bottomStack', title: 'Bottom-stack', caption: ' a \'super sandwich\' with the top card and the bottom card of the whole stack of the same rank:', cardArray: bottomstack }))))
 	      );
 	    } else {
 	      return React.createElement('div', null);
@@ -873,7 +892,7 @@
 	        context.restore();
 	    };
 
-	    var drawCard = function drawCard(card) {
+	    var drawCard = function drawCard(card, customFont) {
 	        var rank = parseInt(card.slice(0, card.length - 1)),
 	            suit = card.slice(-1),
 	            color = 'red';
@@ -898,7 +917,7 @@
 	            case 14:
 	                rank = 'A';break;
 	        }
-	        context.font = "bold " + fontSize + "px Times New Roman";
+	        context.font = "bold " + fontSize + "px " + customFont;
 	        context.textAlign = 'center';
 	        context.fillStyle = color;
 	        context.fillText(rank, fontX, fontY);
@@ -914,29 +933,29 @@
 /* 3 */
 /***/ function(module, exports) {
 
-	"use strict";
+	'use strict';
 
 	var IconCanvas = function IconCanvas(canvas) {
 	    var context = canvas.getContext('2d'),
 	        cx = canvas.width / 2,
 	        cy = canvas.height / 2;
 
-	    var drawRules = function drawRules(text, color) {
-	        var radius = cx - 2,
-	            fontSize = 45,
-	            pi2 = 2 * Math.PI;
-	        context.beginPath();
-	        context.arc(cx, cy, radius, 0, pi2, false);
-	        context.lineWidth = 3.5;
-	        context.strokeStyle = color;
-	        context.stroke();
-	        context.font = "bold " + fontSize + "px Times New Roman";
-	        context.textAlign = 'center';
-	        context.fillStyle = color;
-	        context.fillText(text, canvas.width / 2, canvas.height / 1.4);
-	    };
+	    /*var drawRules = function(text, color){
+	      var radius = cx-2,
+	          fontSize = 45,
+	          pi2 = 2 * Math.PI;
+	      context.beginPath();
+	      context.arc(cx, cy, radius, 0, pi2, false);
+	      context.lineWidth = 3.5;
+	      context.strokeStyle = color;
+	      context.stroke();
+	      context.font = "bold "+fontSize+"px "+customFont;
+	      context.textAlign = 'center';
+	      context.fillStyle = color;
+	      context.fillText(text, canvas.width/2, canvas.height/(1.4));
+	    };*/
 
-	    var drawSubSettings = function drawSubSettings(text, color, fontSize) {
+	    var drawSubSettings = function drawSubSettings(text, color, fontSize, customFont, offset) {
 	        var radius = cx - 2,
 	            pi2 = 2 * Math.PI;
 	        context.beginPath();
@@ -944,10 +963,10 @@
 	        context.lineWidth = 3.5;
 	        context.strokeStyle = color;
 	        context.stroke();
-	        context.font = "bold " + fontSize + "px Times New Roman";
+	        context.font = fontSize + "px " + customFont;
 	        context.textAlign = 'center';
 	        context.fillStyle = color;
-	        context.fillText(text, canvas.width / 2, canvas.height / 1.4);
+	        context.fillText(text, canvas.width / 2 * 0.97, canvas.height / (1.37 + offset));
 	    };
 
 	    var drawSettings = function drawSettings(color) {
@@ -1048,7 +1067,7 @@
 	    };
 
 	    return {
-	        drawRules: drawRules,
+	        //drawRules: drawRules,
 	        drawSettings: drawSettings,
 	        drawSubSettings: drawSubSettings,
 	        clear: clear

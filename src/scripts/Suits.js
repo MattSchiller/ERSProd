@@ -187,7 +187,7 @@ var CardCanvas = (function (canvas) {
     	context.restore();
     };
 
-    var drawCard = function (card){
+    var drawCard = function (card, customFont){
         var rank = parseInt(card.slice(0, card.length-1)),
             suit = card.slice(-1),
             color = 'red';
@@ -212,7 +212,7 @@ var CardCanvas = (function (canvas) {
             case 14:
                 rank='A'; break;
         }
-        context.font = "bold "+fontSize+"px Times New Roman";
+        context.font = "bold "+fontSize+"px "+customFont;
         context.textAlign = 'center';
         context.fillStyle = color;
         context.fillText(rank, fontX, fontY);
