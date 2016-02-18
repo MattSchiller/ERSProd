@@ -301,7 +301,7 @@ ios.sockets.on('connection', function(socket){
     var flipResult, mRI;
     mRI=findRoomIndex(data.roomID);
     if (mRI===false) {console.log("There was a problem in finding the roomID specified (flip)"); return;}
-    if (gameRooms[mRI].gameActive=false) {console.log("Game room not active, ignoring flip"); return;}
+    if (gameRooms[mRI].gameActive===false) {console.log("Game room not active, ignoring flip"); return;}
     console.log("Received a flip message from: "+gameRooms[mRI].gL.getName(socket));
     flipResult = gameRooms[mRI].gL.flip(socket);
     if (flipResult.msg==="") return;                                                    //To ignore spamming when it's not the player's turn
@@ -315,7 +315,7 @@ ios.sockets.on('connection', function(socket){
     var slapOutcome, mRI;
     mRI=findRoomIndex(data.roomID);
     if (mRI===false) {console.log("There was a problem in finding the roomID specified (slap)"); return;}
-    if (gameRooms[mRI].gameActive=false) {console.log("Game room not active, ignoring slap"); return;}
+    if (gameRooms[mRI].gameActive===false) {console.log("Game room not active, ignoring slap"); return;}
     console.log("Received slap message from:",gameRooms[mRI].gL.getName(socket));
     slapOutcome=gameRooms[mRI].gL.slap(socket);
     console.log("slapOutcome:",slapOutcome);
