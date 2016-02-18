@@ -731,22 +731,30 @@ var RulesModal = React.createClass({
         <div className={'rulesModal mainTheme'} >
           <span style={{fontSize:"17pt"}}><u><b>Rules of Egyptian Ratscrew:</b></u></span>
           <ul>
-            <li>The point of the game is to get all the cards. Players have two actions: flip <span className="controls">[TAB]</span> and slap <span className="controls">[SPACEBAR]</span>.
-            </li><li>Starting with the first player to sit down, players flip the top card off their pile and place it face-up in the middle. If the card played is a number card, the next player puts down a card, too. This continues around the table until somebody puts down a face card <b>(J, Q, K, or A)</b>.
-            </li><li>When a face card (aces are face cards!) is played, the next person in the sequence must flip another face card in the alloted number of chances in order for play to continue.
-            </li><li><b>Chances provided: J -> 1, Q -> 2, K -> 3, A -> 4.</b>
-            </li><li>If the next person in the sequence does NOT play a face card within their allotted number of chances, the person who played the last face card wins the round and the whole pile goes to them. The winner begins the next round of play.
-            </li><li>The only thing that overrides the face card rule is the slap rule. If a slap pattern is present, no matter the status of the pile, the first person to slap is the winner of that round.
-            </li><li>If you slap and there is nothing to slap on, you lose two cards to the penalty pile (that the next pile winner will collect).
-          </li></ul><ul type={"circle"}><b><u>Slappable Patterns:</u> (click to toggle on/off)</b>
-            <li><RuleExample className={doublesClass} type='doubles' title='Doubles' caption=' any 2 cards of the same rank:' cardArray={doubles} />
-              </li>
+            <li>The point of the game is to get all the cards.
+            </li> <br/> <li>Players have two actions: <ul>
+            <li>On their turn, flip a card: <span className="controls">[TAB]</span>
+            </li> <li>At any time, slap: <span className="controls">[SPACEBAR]</span>
+            </li> </ul> <br/>
+            </li><li>Starting with the first player to sit down, players flip the top card off their pile and place it face-up in the middle. If the card played is a number card, the next player puts down a card, too. This continues around the table until somebody puts down a <span className='controls'>face card (J, Q, K, or A)</span>.
+            </li> <br/> <li>When a face card (Aces are face cards!) is played, the next person in the sequence must flip another face card in the alloted number of chances in order for play to continue.
+            </li> <br/> <li> <span className='controls'> Chances provided:<ul>
+                <li>J -> 1</li>
+                <li>Q -> 2</li>
+                <li>K -> 3</li>
+                <li>A -> 4</li> </ul> </span>
+            </li> <br/> <li>If the next person in the sequence does NOT play a face card within their allotted number of chances, the person who played the last face card wins the round and all the cards in the center go to them. This pile winner begins the next round of play.
+            </li> <br/> <li>The only thing that overrides the face card rule is the slap rule. If a slap pattern is present, no matter the status of the pile, the first person to slap is the winner of that round.
+            </li> <br/> <li>If you slap and there is nothing to slap on, you lose two cards to the penalty pile (that the next pile winner will collect).
+            </li> </ul> <p> <span className='controls'> <u>Slappable Patterns:</u> <em>(click to toggle each rule on/off)</em> </span> </p> <ul><hr />
+            <li> <RuleExample className={doublesClass} type='doubles' title='Doubles' caption=' any 2 cards of the same rank:' cardArray={doubles} />
+              </li> <hr />
             <li><RuleExample className={sandwichClass} type='sandwich' title='Sandwich' caption=' 2 cards of the same rank with 1 card between them:' cardArray={sandwich} />
-              </li>
+              </li><hr />
             <li><RuleExample className={flushClass} type='flush' title='Flush' caption=' 3 cards in a row of the same suit:' cardArray={flush} />
-              </li>
+              </li><hr />
             <li><RuleExample className={straightClass} type='straight' title='Straight' caption=" 3 cards in a row of ascending or descending ranks, no 'Ace wrap-a-rounds':" cardArray={straight} />
-              </li>
+              </li><hr />
             <li><RuleExample className={bottomStackClass} type='bottomStack' title='Bottom-stack' caption=" a 'super sandwich' with the top card and the bottom card of the whole stack of the same rank:" cardArray={bottomstack} />
               </li>
           </ul>

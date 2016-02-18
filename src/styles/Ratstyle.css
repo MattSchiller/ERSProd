@@ -314,6 +314,7 @@ h1 {
 
 .ruleOff {
   background-color: maroon;
+  opacity: 0.45;
 }
 
 .controls {
@@ -357,4 +358,12 @@ h1 {
   z-index: 99;
   top: 84%;
   left: 30%;
+}
+
+hr {
+  margin: 5px 20% 5px 11%;
+}
+
+p {
+  text-indent: 10px;
 }
