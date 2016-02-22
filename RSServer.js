@@ -52,12 +52,15 @@ server.listen(serverPath);
 console.log("listening on port 8001");
 var ios = io.listen(server);
 
+var gameRooms = [], roomPrefix='Room ';                              //ADD IN LOBBY 'room'
+
 function GameRoom(){
   this.gL=new RatscrewLogic();
   this.id=Date.now();
   this.users=[];
   this.numAI=0;
   this.gameActive=false;
+  this.clearing=false;
 }
 function sendGameState(socket, ios, mRI, toAll){
   console.log("Sending game state to room index:", mRI);
@@ -213,8 +216,6 @@ function amIInRoom(socket, ios, roomID){
   return true;
 }
 
-var gameRooms = [], roomPrefix='Room ';                              //ADD IN LOBBY 'room'
-
 ios.sockets.on('connection', function(socket){
   console.log("New user connected");
   sendRoomsList(socket, ios, false);
@@ -307,10 +308,11 @@ ios.sockets.on('connection', function(socket){
     var flipResult, mRI;
     mRI=findRoomIndex(data.roomID);
     if (mRI===false) {console.log("There was a problem in finding the roomID specified (flip)"); return;}
-    if (gameRooms[mRI].gameActive===false) {console.log("Game room not active, ignoring flip"); return;}
+    if (!gameRooms[mRI].gameActive || gameRooms[mRI].clearing) {console.log("Game room not active/mid-clear, ignoring flip"); return;}
     console.log("Received a flip message from: "+gameRooms[mRI].gL.getName(socket));
     flipResult = gameRooms[mRI].gL.flip(socket);
     if (flipResult.msg==="") return;                                                    //To ignore spamming when it's not the player's turn
+    emitEvent(socket, ios, mRI, 'flip');
     emitMessage(socket, ios, mRI, flipResult.msg, false);
     sendGameState(socket, ios, mRI, true);
     if (flipResult.clear) serverClear(flipResult.clearPlayer, ios, mRI, 'Flip');
@@ -321,7 +323,7 @@ ios.sockets.on('connection', function(socket){
     var slapOutcome, mRI;
     mRI=findRoomIndex(data.roomID);
     if (mRI===false) {console.log("There was a problem in finding the roomID specified (slap)"); return;}
-    if (gameRooms[mRI].gameActive===false) {console.log("Game room not active, ignoring slap"); return;}
+    if (!gameRooms[mRI].gameActive || gameRooms[mRI].clearing) {console.log("Game room not active/mid-clear, ignoring slap"); return;}
     console.log("Received slap message from:",gameRooms[mRI].gL.getName(socket), 'slappable:',gameRooms[mRI].gL.slappable());
     if (gameRooms[mRI].gL.slappable()){
       emitEvent(socket, ios, mRI, 'slap');
@@ -332,7 +334,7 @@ ios.sockets.on('connection', function(socket){
       }
       emitMessage(socket, ios, mRI, slapOutcome.msg, false);
       if (slapOutcome.success) serverClear(gameRooms[mRI].gL.findIndex(socket), ios, mRI, 'Slap');
-      sendGameState(socket, ios, mRI, true);
+      else sendGameState(socket, ios, mRI, true);
       if (gameRooms[mRI].gL.winner!==false) emitWinner(gameRooms[mRI].gL.winner,ios,mRI);
     }
   });
@@ -354,10 +356,15 @@ ios.sockets.on('connection', function(socket){
 
 function serverClear(socket, ios, mRI, clearType){
 //Empties the center area and pushes the cards into another player's stack
-  var subIos=ios, subSock=socket, subRoom=mRI;
+  var subIos=ios, subSock=socket, subRoom=mRI, subDelay=1000;
   console.log("Server requesting clear.");
   gameRooms[mRI].gL.clearCenter(socket, clearType, function() {
     console.log("Running callback");
-    sendGameState(subSock, subIos, subRoom, true);
+    subIos.sockets.emit('clear', {dur:subDelay});
+    gameRooms[mRI].clearing=true;
+    setTimeout(function(){
+      sendGameState(subSock, subIos, subRoom, true);
+      gameRooms[mRI].clearing=false;
+    }, subDelay);
   });
 }

@@ -264,7 +264,7 @@ RS.prototype.doPenalty=function(num){
 RS.prototype.clearCenter=function(num, clearType, callBackFnc){
 //Empties the center area and pushes the cards into another player's stack
   //console.log("In gL.clearCenter",num,clearType,callBackFnc);
-  var delay, clearSuccess=false, callBack=callBackFnc, that=this;
+  var delay, callBack=callBackFnc, that=this;
   if (clearType=='Slap') delay=0;
   else delay=this.clearDelay;
   setTimeout(function(){

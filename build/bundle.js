@@ -75,7 +75,7 @@
 	    if (!this.props.cards) myCards = [];else {
 	      var myCards = this.props.cards.map(function (card, i) {
 	        //console.log("Creating comment with id/key:",comment.id);
-	        return React.createElement(CardImage, { value: card.card, color: this._findColor(card.index), box: this.props.box, pos: i, key: i, className: 'card' });
+	        return React.createElement(CardImage, { value: card.card, color: this._findColor(card.index), box: this.props.box, pos: i, key: i, className: 'card', fade: true });
 	      }.bind(this));
 	    }
 	    return React.createElement('div', { className: myClass }, myCards);
@@ -87,12 +87,23 @@
 	  getInitialState: function getInitialState() {
 	    var boxScale = 1;
 	    if (this.props.box == "penalty") boxScale = 0.7;else if (this.props.box == "rules") boxScale = 0.5;
-	    return { width: 50, height: 70, scale: boxScale };
+	    return { width: 50, height: 70, scale: boxScale, fadeColor: '#39B3C1' };
 	  },
 	  componentDidMount: function componentDidMount() {
-	    var myCanvas = document.getElementById(this.props.box + this.props.pos),
-	        myImage = new CardCanvas(myCanvas);
-	    myImage.drawCard(this.props.value, customFont);
+	    var myCanvas = document.getElementById(this.props.box + this.props.pos);
+	    this.myImage = new CardCanvas(myCanvas);
+	    this.myImage.drawCard(this.props.value, customFont, this.props.box, this.props.fade, this.state.fadeColor);
+	    console.log("Mounted card:", this.props.value);
+	    socket.on('clear', this._handleClear);
+	  },
+	  componentWillUnmount: function componentWillUnmount() {
+	    socket.removeListener('clear', this._handleClear);
+	  },
+	  _handleClear: function _handleClear(data) {
+	    if (this.props.box === 'penalty' || this.props.box === 'center') {
+	      console.log("I will fade:", this.props.box, this.props.value);
+	      this.myImage.eraseCard(data.dur);
+	    }
 	  },
 	  render: function render() {
 	    var cardStyle = {
@@ -148,52 +159,11 @@
 	var SinglePlayer = React.createClass({
 	  displayName: 'SinglePlayer',
 
-	  getInitialState: function getInitialState() {
-	    return { events: [] };
-	  },
 	  getDefaultProps: function getDefaultProps() {
-	    return { isSelf: true };
+	    return { isSelf: false };
 	  },
-	  componentDidMount: function componentDidMount() {
-	    this.isUnmounted = false;
-	    this.myElement = document.getElementById('player' + this.props.player.index);
-	    socket.on('event', this._initEvent);
-	  },
-	  componentWillUnmount: function componentWillUnmount() {
-	    this.isUnmounted = true;
-	    socket.removeEventListener('event', this._initEvent);
-	  },
-	  _initEvent: function _initEvent(event) {
-	    if (event.index === this.props.player.index) {
-	      //The animation is 'mine'
-	      var nextEvents = this.state.events,
-	          eventID,
-	          timeIndex = Date.now();
-	      console.log("Adding an event:", event.type, "time:", timeIndex);
-	      nextEvents.push({ id: timeIndex,
-	        type: event.type
-	      });
-	      console.log("nextEvents:", nextEvents);
-	      this.setState({ events: nextEvents });
-	    }
-	  },
-	  _removeEvent: function _removeEvent(myID) {
-	    //This functon is designed to be a callback function, called by the animation object
-	    var nextEvents = this.state.events,
-	        index = this._findMyIndex(myID);
-	    console.log("Player:", this.props.player.index, "received trigger:", myID, "index:", index);
-	    if (index === false) {
-	      console.log("Couldn't remove event, index:", index);
-	      return;
-	    }
-	    nextEvents.splice(index, 1);
-	    this.setState({ events: nextEvents });
-	  },
-	  _findMyIndex: function _findMyIndex(myID) {
-	    for (var z = 0; z < this.state.events.length; z++) {
-	      if (this.state.events[z].id === myID) return z;
-	    }
-	    return false;
+	  componentWillMount: function componentWillMount() {
+	    this.myID = 'player' + this.props.player.index;
 	  },
 	  render: function render() {
 	    var spanStyle = {
@@ -207,24 +177,30 @@
 	      amICurr = " blinking";
 	      console.log("Added curr status to:", this.props.player.name);
 	    }
-	    return React.createElement('div', { className: this.props.className + ' singlePlayer mainTheme' + amICurr, id: 'player' + this.props.player.index }, this.state.events.map(function (event, index) {
-	      return React.createElement(EventAnimation, { type: event.type, box: '#' + this.props.player.index, eventID: event.id, removal: this._removeEvent, key: index, color: spanStyle.color,
-	        parentDimensions: this.myElement.getBoundingClientRect(), isSelf: this.props.isSelf });
-	    }.bind(this)), React.createElement('span', { style: spanStyle }, this.props.player.name), React.createElement('br', null), ' ', React.createElement('span', null, React.createElement('b', null, 'Cards: ')), React.createElement('span', { style: { fontSize: "15pt" } }, React.createElement('b', null, this.props.player.cards)));
+	    return React.createElement('div', { className: this.props.className + ' singlePlayer mainTheme' + amICurr, id: this.myID }, React.createElement(EventAnimation, { pIndex: this.props.player.index, color: spanStyle.color, isSelf: this.props.isSelf }), React.createElement('span', { style: spanStyle }, this.props.player.name), React.createElement('br', null), ' ', React.createElement('span', null, React.createElement('b', null, 'Cards: ')), React.createElement('span', { style: { fontSize: "15pt" } }, React.createElement('b', null, this.props.player.cards)));
 	  }
 	});
 	var EventAnimation = React.createClass({
 	  displayName: 'EventAnimation',
 
 	  componentDidMount: function componentDidMount() {
-	    var elementID = this.props.box + this.props.eventID,
+	    var elementID = '#' + this.props.pIndex,
 	        myCanvas = document.getElementById(elementID);
-	    new Animation(myCanvas, this.props.color, this.props.type, this.props.removal, this.props.eventID, elementID, this.props.isSelf);
+	    this.myAnimations = new Animation(myCanvas, this.props.color, elementID, this.props.isSelf); //, , this.props.type, this.props.removal, this.props.eventID, elementID, this.props.isSelf);
+	    socket.on('event', this._initEvent);
 	    console.log("Drawing animation, type:", this.props.type, "eventID: ", this.props.eventID);
 	  },
+	  componentWillUnmount: function componentWillUnmount() {
+	    socket.removeEventListener('event', this._initEvent);
+	  },
+	  _initEvent: function _initEvent(event) {
+	    if (event.index === this.props.pIndex) {
+	      console.log("Adding", event.type, "to player:", this.props.pIndex);
+	      this.myAnimations.add(event.type);
+	    }
+	  },
 	  render: function render() {
-	    return React.createElement('canvas', { id: this.props.box + this.props.eventID, height: this.props.parentDimensions.height, width: this.props.parentDimensions.width,
-	      className: 'animation' });
+	    return React.createElement('canvas', { id: '#' + this.props.pIndex, className: 'animation' });
 	  }
 	});
 
@@ -818,11 +794,14 @@
 	        height = canvas.height * 0.4,
 	        fontSize = canvas.height / 70 * 23,
 	        fontX = canvas.width / 2,
-	        fontY = canvas.height * 2.2 / 7;
-	    context.save();
-	    context.fillStyle = "#F1E9D2";
-	    context.fillRect(0, 0, canvas.width, canvas.height);
-	    context.restore();
+	        fontY = canvas.height * 2.2 / 7,
+	        fading = false,
+	        fadeColor,
+	        startTime,
+	        dur,
+	        card,
+	        customFont,
+	        fadeReverse = false;
 
 	    var drawSpade = function drawSpade(color) {
 	        context.save();
@@ -832,6 +811,8 @@
 
 	        context.beginPath();
 	        context.moveTo(x, y);
+
+	        context.fillStyle = color;
 
 	        // top left of spade
 	        context.bezierCurveTo(x, y + topHeight / 2, // control point 1
@@ -959,11 +940,37 @@
 	        context.restore();
 	    };
 
-	    var drawCard = function drawCard(card, customFont) {
+	    var _draw = function _draw(timestamp) {
 	        var rank = parseInt(card.slice(0, card.length - 1)),
 	            suit = card.slice(-1),
-	            color = 'red';
-	        if (suit == 'C' || suit == 'S') color = 'black';
+	            color,
+	            opacity,
+	            progress = timestamp - startTime,
+	            percentThrough = progress / dur;
+
+	        if (progress >= dur) fading = false;
+
+	        context.clearRect(0, 0, canvas.width, canvas.height);
+
+	        if (fading) {
+	            color = fadeColor;
+	            if (fadeReverse) opacity = 1 - percentThrough;else opacity = percentThrough;
+
+	            context.globalAlpha = opacity;
+	        } else {
+	            if (!fadeReverse) {
+	                //Just a regular card to display now
+	                if (suit == 'C' || suit == 'S') color = 'black';else color = 'red';
+	                opacity = 1;
+
+	                context.save();
+	                context.globalAlpha = opacity;
+	                context.fillStyle = "#F1E9D2";
+	                context.fillRect(0, 0, canvas.width, canvas.height);
+	                context.restore();
+	            }
+	        }
+
 	        switch (suit) {
 	            case 'C':
 	                drawClub(color);break;
@@ -974,6 +981,7 @@
 	            case 'S':
 	                drawSpade(color);break;
 	        }
+
 	        switch (rank) {
 	            case 11:
 	                rank = 'J';break;
@@ -988,9 +996,35 @@
 	        context.textAlign = 'center';
 	        context.fillStyle = color;
 	        context.fillText(rank, fontX, fontY);
+
+	        if (fading) window.requestAnimationFrame(_draw);
+	    };
+
+	    var drawCard = function drawCard(myCard, myFont, box, useFade, fColor) {
+
+	        card = myCard;
+	        customFont = myFont;
+	        if (box === 'center') dur = 225;else if (box === 'penalty') dur = 500;else dur = 0;
+
+	        if (useFade) {
+	            fading = true;
+	            fadeColor = fColor;
+	            startTime = window.performance.now();
+	        }
+
+	        _draw(startTime);
+	    };
+
+	    var eraseCard = function eraseCard(duration) {
+	        fadeReverse = true;
+	        dur = duration;
+	        startTime = window.performance.now();
+	        fading = true;
+	        window.requestAnimationFrame(_draw);
 	    };
 	    return {
-	        drawCard: drawCard
+	        drawCard: drawCard,
+	        eraseCard: eraseCard
 	    };
 	};
 
@@ -1149,65 +1183,152 @@
 
 	'use strict';
 
-	var Animation = function Animation(canvas, color, type, removal, eventID, elementID, isSelf) {
-	    var context = canvas.getContext('2d'),
-	        x = canvas.width * 0.5,
-	        y = canvas.height * 0.5,
-	        durations = { slap: 500,
-	        flip: 500 },
-	        myColor = color,
-	        myEventID = eventID,
-	        myRemoval = removal,
-	        myElement = document.getElementById(elementID),
-	        startTime = null,
-	        animationFlip = isSelf;
+	var Animation = function Animation(canvas, color, elementID, isSelf) {
+	  var context = canvas.getContext('2d'),
+	      durations = { slap: 500,
+	    flip: 650,
+	    clear: 500
+	  },
+	      myColor = color,
+	      myElement = document.getElementById(elementID),
+	      animationFlip = isSelf,
+	      myAnimations = [],
+	      removeQueue = [],
+	      animationOffset = '50%',
+	      x = canvas.width * 0.5,
+	      y = canvas.height * 0.25,
+	      flipDir = 1,
+	      cardDims = { width: 50, height: 70 };
 
-	    var drawFlip = function drawFlip(timestamp) {
-	        var opacity = 0.9,
-	            flipColor = '#39B3C1',
-	            myElement = document.getElementById(elementID),
-	            width,
-	            height;
+	  if (animationFlip) {
+	    animationOffset = '-150%';
+	    y = canvas.height * 0.75;
+	    flipDir = -1;
+	  }
+	  document.getElementById(elementID).style.top = animationOffset;
 
-	        myElement.borderWidth = 1.5;
-	        myElement.borderStyle = "solid", myElement.margin = "1px", myElement.borderRadius = "5px", myElement.borderColor = color, myElement.WebkitBoxShadow = "0 0 10px 1px " + color, myElement.MozBoxShadow = "0 0 10px 1px " + color, myElement.boxShadow = "0 0 10px 1px " + color, myElement.opacity = opacity;
-
-	        var _removal = removal,
-	            _myID = myID;
-	        setTimeout(function () {
-	            _removal(_myID);
-	        }, 1000);
-	    };
-	    var drawSlap = function drawSlap(timestamp) {
-	        console.log("In drawSlap");
-	        if (!startTime) startTime = timestamp;
-	        var progress = timestamp - startTime,
-	            percentThrough = progress / durations.slap;
-
-	        if (progress >= durations.slap) {
-	            myRemoval(myEventID); //Removes self from DOM
-	            return;
-	        }
-
-	        var radius = x * percentThrough,
-	            opacity = 1 - 0.5 * percentThrough;
-
-	        context.clearRect(0, 0, 2 * x, 2 * y);
-	        context.globalAlpha = opacity;
-	        context.beginPath();
-	        context.arc(x, y, radius, 0, Math.PI, animationFlip);
-	        context.lineWidth = 10 * percentThrough;
-	        context.strokeStyle = myColor;
-	        context.stroke();
-
-	        window.requestAnimationFrame(drawSlap);
-	    };
-
-	    console.log("In animations");
-	    switch (type) {
-	        case 'slap':
-	            window.requestAnimationFrame(drawSlap);break;
+	  var _drawSlap = function _drawSlap(timestamp, index) {
+	    //console.log("In drawSlap, my event:",myAnimations[index]);
+	    var myStart = myAnimations[index].start,
+	        progress = timestamp - myStart,
+	        percentThrough = progress / durations.slap;
+	    //console.log("timestamp:",timestamp,"myStart:",myStart, "percent:",percentThrough);
+	    if (progress < 0) {
+	      context.rect(4, y, 2 * x - 8, y / 2 - 4);
+	      return; //Issues with first frame sending timestamp too far in the past
 	    }
+	    if (progress >= durations.slap) {
+	      //console.log("Added",index,"to removeQueue");
+	      removeQueue.push(index);
+	      return;
+	    }
+
+	    var radius = 0.75 * x * percentThrough,
+	        opacity = 1 - 0.8 * percentThrough;
+
+	    context.save();
+
+	    context.globalAlpha = opacity;
+
+	    context.beginPath();
+	    context.arc(x, y, radius, 0, Math.PI, animationFlip);
+	    context.lineWidth = 10 * percentThrough;
+	    context.strokeStyle = myColor;
+	    context.stroke();
+	    context.closePath();
+
+	    context.restore();
+	  };
+
+	  var _drawFlip = function _drawFlip(timestamp, index) {
+	    //console.log("In drawSlap, my event:",myAnimations[index]);
+	    var myStart = myAnimations[index].start,
+	        progress = timestamp - myStart,
+	        percentThrough = progress / durations.flip;
+	    //console.log("timestamp:",timestamp,"myStart:",myStart, "percent:",percentThrough);
+	    if (progress < 0) {
+	      return; //Issues with first frame sending timestamp too far in the past
+	    }
+	    if (progress >= durations.flip) {
+	      //console.log("Added",index,"to removeQueue");
+	      removeQueue.push(index);
+	      return;
+	    }
+
+	    var moveDist = 0.75 * canvas.height * percentThrough * flipDir,
+	        opacity = 1 - 0.9 * percentThrough;
+
+	    context.save();
+
+	    context.globalAlpha = opacity;
+	    context.fillStyle = myColor;
+	    _rCorners(x - cardDims.width / 2, y + moveDist, cardDims.width, cardDims.height, 5, myColor, true);
+
+	    context.restore();
+	  };
+
+	  var _rCorners = function _rCorners(_x, _y, _width, _height, _radius, _color, stroke) {
+	    if (typeof stroke == 'undefined') {
+	      stroke = true;
+	    }
+	    //_radius = 5;
+	    context.beginPath();
+	    context.moveTo(_x + _radius, _y);
+	    context.lineTo(_x + _width - _radius, _y);
+	    context.quadraticCurveTo(_x + _width, _y, _x + _width, _y + _radius);
+	    context.lineTo(_x + _width, _y + _height - _radius);
+	    context.quadraticCurveTo(_x + _width, _y + _height, _x + _width - _radius, _y + _height);
+	    context.lineTo(_x + _radius, _y + _height);
+	    context.quadraticCurveTo(_x, _y + _height, _x, _y + _height - _radius);
+	    context.lineTo(_x, _y + _radius);
+	    context.quadraticCurveTo(_x, _y, _x + _radius, _y);
+	    context.closePath();
+	    context.fill();
+	    if (stroke) {
+	      context.stroke();
+	    }
+	  };
+
+	  var add = function add(type) {
+	    //console.log("type:",type,"perf:",window.performance.now());
+	    myAnimations.push({ type: type, start: window.performance.now() });
+	    //console.log("Just added, myAnimations:",myAnimations);
+	    window.requestAnimationFrame(_draw);
+	  };
+
+	  var _handleQueue = function _handleQueue() {
+	    //Removes elements in reverse order so that the assigned indeces don't change during manipulation
+	    var removeIndex;
+	    while (removeQueue.length) {
+	      removeIndex = removeQueue.pop();
+	      myAnimations.splice(removeIndex, 1);
+	    }
+	  };
+
+	  var _draw = function _draw(timestamp) {
+	    //console.log("In draw, animations:",myAnimations);
+	    _clear();
+	    for (var z = 0; z < myAnimations.length; z++) {
+	      switch (myAnimations[z].type) {
+	        case 'slap':
+	          _drawSlap(timestamp, z);break;
+	        case 'flip':
+	          _drawFlip(timestamp, z);break;
+	      }
+	    }
+	    if (removeQueue.length > 0) _handleQueue();
+	    if (myAnimations.length > 0) window.requestAnimationFrame(_draw);else _clear();
+	  };
+
+	  var _clear = function _clear() {
+	    context.clearRect(0, 0, canvas.width, canvas.height);
+	  };
+
+	  //console.log("In animations");
+
+	  return {
+	    add: add
+	  };
 	};
 
 	module.exports = Animation;
