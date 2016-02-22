@@ -69,6 +69,11 @@ function sendGameState(socket, ios, mRI, toAll){
       center:gameRooms[mRI].gL.center(), penalty:gameRooms[mRI].gL.penalty(), rules:gameRooms[mRI].gL.getRules()});
   }
 }
+function emitEvent(socket, ios, mRI, event){
+  var index = gameRooms[mRI].gL.findIndex(socket);
+  console.log("Emitting event ("+event+") from player",index);
+  ios.to(gameRooms[mRI].id).emit('event',{'index':index, 'type':event});
+}
 function emitMessage(socket, ios, mRI, message, isChat){
   console.log("Emitting:",message);
   if (gameRooms[mRI]===undefined) {
@@ -267,6 +272,7 @@ ios.sockets.on('connection', function(socket){
     gameRooms[mRI].gL.resetPlayer(socket);
     sendButtonStatus(socket, ios, mRI, true);
     sendGameState(socket, ios, mRI, true);
+    sendRoomsList(socket, ios, true);
     sendID(socket, mRI);
   });
   socket.on('addAI', function(data){
@@ -316,16 +322,19 @@ ios.sockets.on('connection', function(socket){
     mRI=findRoomIndex(data.roomID);
     if (mRI===false) {console.log("There was a problem in finding the roomID specified (slap)"); return;}
     if (gameRooms[mRI].gameActive===false) {console.log("Game room not active, ignoring slap"); return;}
-    console.log("Received slap message from:",gameRooms[mRI].gL.getName(socket));
-    slapOutcome=gameRooms[mRI].gL.slap(socket);
-    console.log("slapOutcome:",slapOutcome);
-    if (slapOutcome.msg==="") {
-      console.log("Ignoring a slap"); return;                                           //probably a lag mistake
+    console.log("Received slap message from:",gameRooms[mRI].gL.getName(socket), 'slappable:',gameRooms[mRI].gL.slappable());
+    if (gameRooms[mRI].gL.slappable()){
+      emitEvent(socket, ios, mRI, 'slap');
+      slapOutcome=gameRooms[mRI].gL.slap(socket);
+      console.log("slapOutcome:",slapOutcome);
+      if (slapOutcome.msg==="") {
+        console.log("Ignoring a slap"); return;                                           //probably a lag mistake
+      }
+      emitMessage(socket, ios, mRI, slapOutcome.msg, false);
+      if (slapOutcome.success) serverClear(gameRooms[mRI].gL.findIndex(socket), ios, mRI, 'Slap');
+      sendGameState(socket, ios, mRI, true);
+      if (gameRooms[mRI].gL.winner!==false) emitWinner(gameRooms[mRI].gL.winner,ios,mRI);
     }
-    emitMessage(socket, ios, mRI, slapOutcome.msg, false);
-    if (slapOutcome.success) serverClear(gameRooms[mRI].gL.findIndex(socket), ios, mRI, 'Slap');
-    sendGameState(socket, ios, mRI, true);
-    if (gameRooms[mRI].gL.winner!==false) emitWinner(gameRooms[mRI].gL.winner,ios,mRI);
   });
   socket.on('rule', function(data){
     var mRI=findRoomIndex(data.roomID), ruleOutcome;

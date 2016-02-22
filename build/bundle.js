@@ -57,9 +57,9 @@
 	    customFont = 'Orbitron, sans-serif',
 	    tooltipConst = 'tooltip2';
 
-	var CardCanvas = __webpack_require__(2);
-
-	var IconCanvas = __webpack_require__(3);
+	var CardCanvas = __webpack_require__(2),
+	    IconCanvas = __webpack_require__(3),
+	    Animation = __webpack_require__(4);
 
 	var CardBox = React.createClass({
 	  displayName: 'CardBox',
@@ -93,9 +93,6 @@
 	    var myCanvas = document.getElementById(this.props.box + this.props.pos),
 	        myImage = new CardCanvas(myCanvas);
 	    myImage.drawCard(this.props.value, customFont);
-	  },
-	  _rescaleCard: function _rescaleCard(newScale) {
-	    this.setState({ scale: newScale });
 	  },
 	  render: function render() {
 	    var cardStyle = {
@@ -141,9 +138,6 @@
 	var PlayersBox = React.createClass({
 	  displayName: 'PlayersBox',
 
-	  getInitialState: function getInitialState() {
-	    return {};
-	  },
 	  render: function render() {
 	    var playerNodes = this.props.players.map(function (player, i) {
 	      return React.createElement(SinglePlayer, { player: player, key: i, curr: this.props.curr });
@@ -154,6 +148,53 @@
 	var SinglePlayer = React.createClass({
 	  displayName: 'SinglePlayer',
 
+	  getInitialState: function getInitialState() {
+	    return { events: [] };
+	  },
+	  getDefaultProps: function getDefaultProps() {
+	    return { isSelf: true };
+	  },
+	  componentDidMount: function componentDidMount() {
+	    this.isUnmounted = false;
+	    this.myElement = document.getElementById('player' + this.props.player.index);
+	    socket.on('event', this._initEvent);
+	  },
+	  componentWillUnmount: function componentWillUnmount() {
+	    this.isUnmounted = true;
+	    socket.removeEventListener('event', this._initEvent);
+	  },
+	  _initEvent: function _initEvent(event) {
+	    if (event.index === this.props.player.index) {
+	      //The animation is 'mine'
+	      var nextEvents = this.state.events,
+	          eventID,
+	          timeIndex = Date.now();
+	      console.log("Adding an event:", event.type, "time:", timeIndex);
+	      nextEvents.push({ id: timeIndex,
+	        type: event.type
+	      });
+	      console.log("nextEvents:", nextEvents);
+	      this.setState({ events: nextEvents });
+	    }
+	  },
+	  _removeEvent: function _removeEvent(myID) {
+	    //This functon is designed to be a callback function, called by the animation object
+	    var nextEvents = this.state.events,
+	        index = this._findMyIndex(myID);
+	    console.log("Player:", this.props.player.index, "received trigger:", myID, "index:", index);
+	    if (index === false) {
+	      console.log("Couldn't remove event, index:", index);
+	      return;
+	    }
+	    nextEvents.splice(index, 1);
+	    this.setState({ events: nextEvents });
+	  },
+	  _findMyIndex: function _findMyIndex(myID) {
+	    for (var z = 0; z < this.state.events.length; z++) {
+	      if (this.state.events[z].id === myID) return z;
+	    }
+	    return false;
+	  },
 	  render: function render() {
 	    var spanStyle = {
 	      color: this.props.player.color,
@@ -166,15 +207,33 @@
 	      amICurr = " blinking";
 	      console.log("Added curr status to:", this.props.player.name);
 	    }
-	    return React.createElement('div', { className: this.props.className + ' singlePlayer mainTheme' + amICurr }, React.createElement('span', { style: spanStyle }, this.props.player.name), React.createElement('br', null), ' ', React.createElement('span', null, React.createElement('b', null, 'Cards: ')), React.createElement('span', { style: { fontSize: "15pt" } }, React.createElement('b', null, this.props.player.cards)));
+	    return React.createElement('div', { className: this.props.className + ' singlePlayer mainTheme' + amICurr, id: 'player' + this.props.player.index }, this.state.events.map(function (event, index) {
+	      return React.createElement(EventAnimation, { type: event.type, box: '#' + this.props.player.index, eventID: event.id, removal: this._removeEvent, key: index, color: spanStyle.color,
+	        parentDimensions: this.myElement.getBoundingClientRect(), isSelf: this.props.isSelf });
+	    }.bind(this)), React.createElement('span', { style: spanStyle }, this.props.player.name), React.createElement('br', null), ' ', React.createElement('span', null, React.createElement('b', null, 'Cards: ')), React.createElement('span', { style: { fontSize: "15pt" } }, React.createElement('b', null, this.props.player.cards)));
 	  }
 	});
+	var EventAnimation = React.createClass({
+	  displayName: 'EventAnimation',
+
+	  componentDidMount: function componentDidMount() {
+	    var elementID = this.props.box + this.props.eventID,
+	        myCanvas = document.getElementById(elementID);
+	    new Animation(myCanvas, this.props.color, this.props.type, this.props.removal, this.props.eventID, elementID, this.props.isSelf);
+	    console.log("Drawing animation, type:", this.props.type, "eventID: ", this.props.eventID);
+	  },
+	  render: function render() {
+	    return React.createElement('canvas', { id: this.props.box + this.props.eventID, height: this.props.parentDimensions.height, width: this.props.parentDimensions.width,
+	      className: 'animation' });
+	  }
+	});
+
 	var SelfBox = React.createClass({
 	  displayName: 'SelfBox',
 
 	  render: function render() {
 	    if (this.props.player === undefined) return React.createElement('div', null);
-	    return React.createElement('div', { className: 'self' }, React.createElement(SinglePlayer, { player: this.props.player, curr: this.props.curr, className: 'mainTheme' }), React.createElement(Settings, { roomID: this.props.roomID, numPlayers: this.props.numPlayers, idVal: 'settings', max: this.props.max }));
+	    return React.createElement('div', { className: 'self' }, React.createElement(SinglePlayer, { player: this.props.player, curr: this.props.curr, className: 'mainTheme', isSelf: true }), React.createElement(Settings, { roomID: this.props.roomID, numPlayers: this.props.numPlayers, idVal: 'settings', max: this.props.max }));
 	  }
 	});
 	var SingleRoom = React.createClass({
@@ -240,6 +299,11 @@
 	    socket.on('gameState', this._updateGameState);
 	    socket.on('id', this._updatePlayerID);
 	  },
+	  componentWillUnmount: function componentWillUnmount() {
+	    socket.removeEventListener('roomsList', this._updateRoomsList);
+	    socket.removeEventListener('gameState', this._updateGameState);
+	    socket.removeEventListener('id', this._updatePlayerID);
+	  },
 	  _updateGameState: function _updateGameState(data) {
 	    console.log("Received gamestate update");
 	    console.log(data);
@@ -260,7 +324,8 @@
 	      return React.createElement(RoomBox, { roomsList: this.state.roomsList, myRoom: this.state.roomID });
 	    } else {
 	      var roomMax = this.state.roomsList[0].max;
-	      return React.createElement('div', null, React.createElement(RoomBox, { roomsList: this.state.roomsList, myRoom: this.state.roomID }), React.createElement(SingleRoom, { players: this.state.players, curr: this.state.curr, penalty: this.state.penalty, center: this.state.center, roomID: this.state.roomID, myPlayerID: this.state.myPlayerID, rules: this.state.rules, max: roomMax }));
+	      return React.createElement('div', null, React.createElement(RoomBox, { roomsList: this.state.roomsList, myRoom: this.state.roomID }), React.createElement(SingleRoom, { players: this.state.players, curr: this.state.curr, penalty: this.state.penalty, center: this.state.center, roomID: this.state.roomID,
+	        myPlayerID: this.state.myPlayerID, rules: this.state.rules, max: roomMax }));
 	    }
 	  }
 	});
@@ -284,12 +349,14 @@
 	    return foundRoom;
 	  },
 	  render: function render() {
-	    var allRooms = [];
+	    var allRooms = [],
+	        startClass = ' blinking';
+	    if (this.props.myRoom !== undefined) startClass = '';
 	    allRooms.push(React.createElement(Room, { name: "New Room", playerDisplay: "", isMyRoom: this.props.myRoom === undefined, isOpen: this.state.open, key: -1 }));
 	    allRooms.push(this.props.roomsList.map(function (room, i) {
 	      return React.createElement(Room, { name: room.name, id: room.id, playerDisplay: "[" + room.numPlayers + "/" + room.max + "]", isMyRoom: this.props.myRoom === room.id, isOpen: this.state.open, key: i });
 	    }.bind(this)));
-	    return React.createElement('div', { className: 'roomBox mainTheme darkerNeutral', onClick: this._toggleMenu }, this._findMyRoomName(), allRooms);
+	    return React.createElement('div', { className: "roomBox mainTheme darkerNeutral" + startClass, onClick: this._toggleMenu }, this._findMyRoomName(), allRooms);
 	  }
 	});
 	var Room = React.createClass({
@@ -960,13 +1027,13 @@
 	            pi2 = 2 * Math.PI;
 	        context.beginPath();
 	        context.arc(cx, cy, radius, 0, pi2, false);
-	        context.lineWidth = 3.5;
+	        context.lineWidth = 3;
 	        context.strokeStyle = color;
 	        context.stroke();
 	        context.font = fontSize + "px " + customFont;
 	        context.textAlign = 'center';
 	        context.fillStyle = color;
-	        context.fillText(text, canvas.width / 2 * 0.97, canvas.height / (1.37 + offset));
+	        context.fillText(text, canvas.width / 2 * 0.98, canvas.height / (1.37 + offset));
 	    };
 
 	    var drawSettings = function drawSettings(color) {
@@ -1075,6 +1142,75 @@
 	};
 
 	module.exports = IconCanvas;
+
+/***/ },
+/* 4 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	var Animation = function Animation(canvas, color, type, removal, eventID, elementID, isSelf) {
+	    var context = canvas.getContext('2d'),
+	        x = canvas.width * 0.5,
+	        y = canvas.height * 0.5,
+	        durations = { slap: 500,
+	        flip: 500 },
+	        myColor = color,
+	        myEventID = eventID,
+	        myRemoval = removal,
+	        myElement = document.getElementById(elementID),
+	        startTime = null,
+	        animationFlip = isSelf;
+
+	    var drawFlip = function drawFlip(timestamp) {
+	        var opacity = 0.9,
+	            flipColor = '#39B3C1',
+	            myElement = document.getElementById(elementID),
+	            width,
+	            height;
+
+	        myElement.borderWidth = 1.5;
+	        myElement.borderStyle = "solid", myElement.margin = "1px", myElement.borderRadius = "5px", myElement.borderColor = color, myElement.WebkitBoxShadow = "0 0 10px 1px " + color, myElement.MozBoxShadow = "0 0 10px 1px " + color, myElement.boxShadow = "0 0 10px 1px " + color, myElement.opacity = opacity;
+
+	        var _removal = removal,
+	            _myID = myID;
+	        setTimeout(function () {
+	            _removal(_myID);
+	        }, 1000);
+	    };
+	    var drawSlap = function drawSlap(timestamp) {
+	        console.log("In drawSlap");
+	        if (!startTime) startTime = timestamp;
+	        var progress = timestamp - startTime,
+	            percentThrough = progress / durations.slap;
+
+	        if (progress >= durations.slap) {
+	            myRemoval(myEventID); //Removes self from DOM
+	            return;
+	        }
+
+	        var radius = x * percentThrough,
+	            opacity = 1 - 0.5 * percentThrough;
+
+	        context.clearRect(0, 0, 2 * x, 2 * y);
+	        context.globalAlpha = opacity;
+	        context.beginPath();
+	        context.arc(x, y, radius, 0, Math.PI, animationFlip);
+	        context.lineWidth = 10 * percentThrough;
+	        context.strokeStyle = myColor;
+	        context.stroke();
+
+	        window.requestAnimationFrame(drawSlap);
+	    };
+
+	    console.log("In animations");
+	    switch (type) {
+	        case 'slap':
+	            window.requestAnimationFrame(drawSlap);break;
+	    }
+	};
+
+	module.exports = Animation;
 
 /***/ }
 /******/ ]);

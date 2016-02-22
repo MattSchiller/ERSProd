@@ -23,13 +23,13 @@ var IconCanvas = (function (canvas) {
         pi2 = 2 * Math.PI;
     context.beginPath();
     context.arc(cx, cy, radius, 0, pi2, false);
-    context.lineWidth = 3.5;
+    context.lineWidth = 3;
     context.strokeStyle = color;
     context.stroke();
     context.font = fontSize+"px "+customFont;
     context.textAlign = 'center';
     context.fillStyle = color;
-    context.fillText(text, (canvas.width/2)*0.97, canvas.height/(1.37+offset));
+    context.fillText(text, (canvas.width/2)*0.98, canvas.height/(1.37+offset));
   };
   
   var drawSettings = function(color) {

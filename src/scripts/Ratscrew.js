@@ -2,9 +2,9 @@ var socket,
     customFont = 'Orbitron, sans-serif',
     tooltipConst = 'tooltip2';
 
-var CardCanvas = require('./Suits.js');
-
-var IconCanvas = require('./Icons.js');
+var CardCanvas = require('./Suits.js'),
+    IconCanvas = require('./Icons.js'),
+    Animation = require('./Animations.js');
 
 var CardBox = React.createClass({
   _findColor: function(index) {
@@ -43,9 +43,6 @@ var CardImage = React.createClass({
         myImage = new CardCanvas(myCanvas);
     myImage.drawCard(this.props.value, customFont);
   },
-  _rescaleCard: function(newScale) {
-    this.setState({scale:newScale});
-  },
   render: function() {
     var cardStyle = {
         borderWidth: 1.5,
@@ -56,9 +53,9 @@ var CardImage = React.createClass({
         WebkitBoxShadow:"0 0 10px 1px "+this.props.color,
         MozBoxShadow: "0 0 10px 1px "+this.props.color,
         boxShadow: "0 0 10px 1px "+this.props.color
-    };
+        };
     return (
-      <canvas id={this.props.box+this.props.pos} height={this.state.height*this.state.scale} width={this.state.width*this.state.scale} style={cardStyle} />
+      <canvas id={this.props.box+this.props.pos} height={this.state.height*this.state.scale} width={this.state.width*this.state.scale} style={cardStyle}/>
       );
   }
 });
@@ -99,9 +96,6 @@ var GameTable = React.createClass({
   }
 });
 var PlayersBox = React.createClass({
-  getInitialState: function() {
-    return ({});
-  },
   render: function() {
     var playerNodes = this.props.players.map(function(player,i) {
       return (
@@ -116,6 +110,51 @@ var PlayersBox = React.createClass({
   }
 });
 var SinglePlayer = React.createClass({
+  getInitialState: function() {
+    return ({events: []});
+  },
+  getDefaultProps: function() {
+    return ({isSelf: true});
+  },
+  componentDidMount: function(){
+    this.isUnmounted = false;
+    this.myElement = document.getElementById('player'+this.props.player.index);
+    socket.on('event', this._initEvent);
+  },
+  componentWillUnmount: function(){
+    this.isUnmounted = true;
+    socket.removeEventListener('event', this._initEvent);
+  },
+  _initEvent: function(event){
+    if (event.index===this.props.player.index){ //The animation is 'mine'
+      var nextEvents = this.state.events,
+          eventID, timeIndex=Date.now();
+          console.log("Adding an event:",event.type,"time:",timeIndex);
+      nextEvents.push({id: timeIndex,
+                       type: event.type
+                      });
+      console.log("nextEvents:",nextEvents);
+      this.setState({events:nextEvents});
+    }
+  },
+  _removeEvent: function(myID){
+    //This functon is designed to be a callback function, called by the animation object
+    var nextEvents=this.state.events,
+        index=this._findMyIndex(myID);
+    console.log("Player:",this.props.player.index, "received trigger:",myID,"index:",index);
+    if (index===false) {
+      console.log("Couldn't remove event, index:",index);
+      return;
+    }
+    nextEvents.splice(index, 1);
+    this.setState({events:nextEvents});
+  },
+  _findMyIndex: function(myID){
+    for(var z=0;z<this.state.events.length;z++){
+      if (this.state.events[z].id===myID) return z;
+    }
+    return false;
+  },
   render: function() {
     var spanStyle = {
       color:this.props.player.color,
@@ -129,19 +168,42 @@ var SinglePlayer = React.createClass({
         console.log("Added curr status to:",this.props.player.name);
       }
     return (
-      <div className={this.props.className+' singlePlayer mainTheme'+amICurr}>
+      <div className={this.props.className+' singlePlayer mainTheme'+amICurr} id={'player'+this.props.player.index}>
+        {
+          this.state.events.map(function(event, index) {
+            return (
+              <EventAnimation type={event.type} box={'#'+this.props.player.index} eventID={event.id} removal={this._removeEvent} key={index} color={spanStyle.color} 
+                parentDimensions={this.myElement.getBoundingClientRect()} isSelf={this.props.isSelf} />
+            );
+          }.bind(this) )
+        }
         <span style={spanStyle}>{this.props.player.name}</span>
         <br/> <span><b>Cards: </b></span><span style={{fontSize:"15pt"}}><b>{this.props.player.cards}</b></span>
       </div>
     );
   }
 });
+var EventAnimation = React.createClass({
+  componentDidMount: function() {
+    var elementID=this.props.box+this.props.eventID,
+        myCanvas = document.getElementById(elementID);
+        new Animation(myCanvas, this.props.color, this.props.type, this.props.removal, this.props.eventID, elementID, this.props.isSelf);
+    console.log("Drawing animation, type:",this.props.type,"eventID: ",this.props.eventID);
+  },
+  render: function() {
+    return (
+      <canvas id={this.props.box+this.props.eventID} height={this.props.parentDimensions.height} width={this.props.parentDimensions.width} 
+          className='animation'/>
+      );
+  }
+});
+
 var SelfBox = React.createClass({
   render: function() {
     if (this.props.player===undefined) return <div />;
     return (
       <div className='self'>
-        <SinglePlayer player={this.props.player} curr={this.props.curr} className='mainTheme'/>
+        <SinglePlayer player={this.props.player} curr={this.props.curr} className='mainTheme' isSelf={true}/>
         <Settings roomID={this.props.roomID} numPlayers={this.props.numPlayers} idVal='settings' max={this.props.max}/>
       </div>
       )
@@ -212,6 +274,11 @@ var ClientUI = React.createClass({
     socket.on('gameState', this._updateGameState);
     socket.on('id', this._updatePlayerID);
   },
+  componentWillUnmount: function() {
+    socket.removeEventListener('roomsList', this._updateRoomsList);
+    socket.removeEventListener('gameState', this._updateGameState);
+    socket.removeEventListener('id', this._updatePlayerID);
+  },
   _updateGameState: function(data){
     console.log("Received gamestate update");
     console.log(data);
@@ -237,7 +304,8 @@ var ClientUI = React.createClass({
       return (
         <div>
           <RoomBox roomsList={this.state.roomsList} myRoom={this.state.roomID} />
-          <SingleRoom players={this.state.players} curr={this.state.curr} penalty={this.state.penalty} center={this.state.center} roomID={this.state.roomID} myPlayerID={this.state.myPlayerID} rules={this.state.rules} max={roomMax}/>
+          <SingleRoom players={this.state.players} curr={this.state.curr} penalty={this.state.penalty} center={this.state.center} roomID={this.state.roomID} 
+            myPlayerID={this.state.myPlayerID} rules={this.state.rules} max={roomMax}/>
         </div>
         );
     }
@@ -260,7 +328,9 @@ var RoomBox = React.createClass({
     return foundRoom;
   },
   render: function(){
-    var allRooms=[];
+    var allRooms=[],
+        startClass=' blinking';
+    if (this.props.myRoom!==undefined) startClass='';
     allRooms.push(<Room name={"New Room"} playerDisplay={""} isMyRoom={this.props.myRoom===undefined} isOpen={this.state.open} key={-1}/>);
     allRooms.push(this.props.roomsList.map(function(room,i) {
       return(
@@ -269,7 +339,7 @@ var RoomBox = React.createClass({
     }.bind(this))
     );
     return (
-      <div className="roomBox mainTheme darkerNeutral" onClick={this._toggleMenu} >
+      <div className={"roomBox mainTheme darkerNeutral"+startClass} onClick={this._toggleMenu} >
         {this._findMyRoomName()}
         {allRooms}
       </div>

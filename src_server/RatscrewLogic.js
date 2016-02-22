@@ -427,5 +427,8 @@ RS.prototype.readyForReady=function(){
 RS.prototype.getMaxPlayers=function(){
   return this.maxPlayers;
 };
+RS.prototype.slappable=function(){
+  return (this.centerPile.length>0);
+}
 
 module.exports = RS;
