@@ -1272,7 +1272,6 @@
 	        var myStart = myAnimations[index].start,
 	            progress = timestamp - myStart,
 	            percentThrough = progress / durations.clear;
-	        console.log("clear: timestamp:", timestamp, "myStart:", myStart, "percent:", percentThrough);
 	        if (progress >= durations.clear) {
 	            //console.log("Added",index,"to removeQueue");
 	            removeQueue.push(index);
