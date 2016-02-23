@@ -137,7 +137,7 @@ h1 {
   /*top:-150%;*/
   left:50%;
   transform: translate(-50%, 0%);
-  z-index: 100;
+  z-index: 10;
 }
 
 .sitDown {
