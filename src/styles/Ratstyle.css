@@ -194,6 +194,7 @@ h1 {
 *:-ms-input-placeholder {/* IE 10+ */color: black;}
 
 .readyButton {
+  position: relative;
   width: 15%;
   height: 10%;
   max-height: 45px;

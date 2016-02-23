@@ -1226,6 +1226,7 @@
 
 	        var radius = 0.5 * x * percentThrough,
 	            opacity = 1 - 0.8 * percentThrough;
+	        if (radius < 0) return;
 
 	        if (animationFlip) y = canvas.height;else y = 0;
 
