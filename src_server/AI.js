@@ -5,6 +5,7 @@ function AI (serverPath, name, roomID, difficulty) {
   this.name = name+' ('+difficulty+')';
   this.roomID = roomID;
   this.difficulty = difficulty;
+  this.flipSpeed = 800;
   this.hurdle = [];
     this.hurdle['easy'] = 0.7;      //Probability of not slapping when pile is slappable
     this.hurdle['medium'] = 0.45;
@@ -12,9 +13,9 @@ function AI (serverPath, name, roomID, difficulty) {
     this.hurdle['brutal'] = 0.05;
   this.speed = [];
     this.speed['easy'] = 1500;      //Time in ms
-    this.speed['medium'] = 1000;
-    this.speed['hard'] = 500;
-    this.speed['brutal'] = 300;
+    this.speed['medium'] = 1200;
+    this.speed['hard'] = 700;
+    this.speed['brutal'] = 500;
   this.misslap = [];
     this.misslap['easy'] = 0.05;      //Probability of slapping when pile is NOT slappable
     this.misslap['medium'] = 0.03;
@@ -80,7 +81,7 @@ function AI (serverPath, name, roomID, difficulty) {
     if (data.players[data.curr].id===this.id && data.players.length>1){ //It's my turn
       setTimeout(function(){                          //Intending to reset the game;
         that.socket.emit('flip', {roomID:that.roomID});
-      }, 600);
+      }, this.flipSpeed);
     }
   }.bind(this));
 }
