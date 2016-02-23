@@ -5,7 +5,7 @@ function AI (serverPath, name, roomID, difficulty) {
   this.name = name+' ('+difficulty+')';
   this.roomID = roomID;
   this.difficulty = difficulty;
-  this.flipSpeed = 800;
+  this.flipSpeed = 850;
   this.hurdle = [];
     this.hurdle['easy'] = 0.7;      //Probability of not slapping when pile is slappable
     this.hurdle['medium'] = 0.45;

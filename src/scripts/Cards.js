@@ -200,18 +200,23 @@ var CardCanvas = (function (canvas) {
         context.clearRect(0, 0, canvas.width, canvas.height);
         
         if (fading){
-          color = fadeColor;
-          if (fadeReverse) opacity = 1-percentThrough;
-          else opacity = percentThrough;
-          
-          
-          context.globalAlpha = opacity;
-        } else {
-          if (!fadeReverse){//Just a regular card to display now
+          if (!fadeReverse){
+            opacity = percentThrough;
+            context.globalAlpha = opacity;
+            context.save();
+            context.fillStyle= "#F1E9D2";
+            context.fillRect(0,0,canvas.width, canvas.height);
+            context.restore();
             if (suit=='C' || suit=='S') color = 'black';
             else color = 'red';
+          } else {
+            color = fadeColor;
+            opacity = 1-percentThrough;
+            context.globalAlpha = opacity;
+          }
+        } else {
+          if (!fadeReverse){//Just a regular card to display now
             opacity = 1;
-            
             context.save();
             context.globalAlpha = opacity;
             context.fillStyle= "#F1E9D2";

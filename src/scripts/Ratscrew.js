@@ -96,7 +96,7 @@ var GameTable = React.createClass({
       <div>
         <br/>
         <PlayersBox players={this._transformPlayers()} curr={this.props.gameInfo.curr}/>
-        <br/>
+        <br/><br/>
         <CardBox cards={this.props.gameInfo.penalty} players={this.props.gameInfo.players} box="penalty"/>
         <CardBox cards={this.props.gameInfo.center} players={this.props.gameInfo.players} box="center"/>
         <ReadyButton myPlayerID={this.props.gameInfo.myPlayerID} roomID={this.props.gameInfo.roomID} />
@@ -141,7 +141,7 @@ var SinglePlayer = React.createClass({
       }
     return (
       <div className={this.props.className+' singlePlayer mainTheme'+amICurr} id={this.myID}>
-        <EventAnimation pIndex={this.props.player.index} color={spanStyle.color} isSelf={this.props.isSelf} />
+        <EventAnimation pIndex={this.props.player.index} color={spanStyle.color} isSelf={this.props.isSelf} myID={'plyr'+this.props.player.index}/>
         <span style={spanStyle}>{this.props.player.name}</span>
         <br/> <span><b>Cards: </b></span><span style={{fontSize:"15pt"}}><b>{this.props.player.cards}</b></span>
       </div>
@@ -150,9 +150,8 @@ var SinglePlayer = React.createClass({
 });
 var EventAnimation = React.createClass({
   componentDidMount: function() {
-    var elementID = '#'+this.props.pIndex,
-        myCanvas = document.getElementById(elementID);
-    this.myAnimations = new Animation(myCanvas, this.props.color, elementID, this.props.isSelf);//, , this.props.type, this.props.removal, this.props.eventID, elementID, this.props.isSelf);
+    var myCanvas = document.getElementById(this.props.myID);
+    this.myAnimations = new Animation(myCanvas, this.props.color, this.props.isSelf);//, , this.props.type, this.props.removal, this.props.eventID, elementID, this.props.isSelf);
     socket.on('event', this._initEvent);
     console.log("Drawing animation, type:",this.props.type,"eventID: ",this.props.eventID);
   },
@@ -167,7 +166,7 @@ var EventAnimation = React.createClass({
   },
   render: function() {
     return (
-      <canvas id={'#'+this.props.pIndex} className='animation'/>
+      <canvas id={this.props.myID} className='animation' width={200} height={100}/>
       );
   }
 });
@@ -782,11 +781,11 @@ var RulesModal = React.createClass({
             </li> </ul> <br/>
             </li><li>Starting with the first player to sit down, players flip the top card off their pile and place it face-up in the middle. If the card played is a number card, the next player puts down a card, too. This continues around the table until somebody puts down a <span className='controls'>face card (J, Q, K, or A)</span>.
             </li> <br/> <li>When a face card (Aces are face cards!) is played, the next person in the sequence must flip another face card in the alloted number of chances in order for play to continue.
-            </li> <br/> <li> <span className='controls'> Chances provided:<ul>
+            </li> <br/> <li> <span className='controls'> Chances provided:</span> <ul>
                 <li>J -> 1</li>
                 <li>Q -> 2</li>
                 <li>K -> 3</li>
-                <li>A -> 4</li> </ul> </span>
+                <li>A -> 4</li> </ul>
             </li> <br/> <li>If the next person in the sequence does NOT play a face card within their allotted number of chances, the person who played the last face card wins the round and all the cards in the center go to them. This pile winner begins the next round of play.
             </li> <br/> <li>The only thing that overrides the face card rule is the slap rule. If a slap pattern is present, no matter the status of the pile, the first person to slap is the winner of that round.
             </li> <br/> <li>If you slap and there is nothing to slap on, you lose two cards to the penalty pile (that the next pile winner will collect).

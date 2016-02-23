@@ -73,7 +73,9 @@ function sendGameState(socket, ios, mRI, toAll){
   }
 }
 function emitEvent(socket, ios, mRI, event){
-  var index = gameRooms[mRI].gL.findIndex(socket);
+  var index;
+  if (event!=='clear') index = gameRooms[mRI].gL.findIndex(socket);
+  else index = socket;
   console.log("Emitting event ("+event+") from player",index);
   ios.to(gameRooms[mRI].id).emit('event',{'index':index, 'type':event});
 }
@@ -354,16 +356,17 @@ ios.sockets.on('connection', function(socket){
   });
 });
 
-function serverClear(socket, ios, mRI, clearType){
+function serverClear(index, ios, mRI, clearType){
 //Empties the center area and pushes the cards into another player's stack
-  var subIos=ios, subSock=socket, subRoom=mRI, subDelay=1000;
+  var subIos=ios, subInd=index, subRoom=mRI, subDelay=1000;
   console.log("Server requesting clear.");
-  gameRooms[mRI].gL.clearCenter(socket, clearType, function() {
+  gameRooms[mRI].gL.clearCenter(index, clearType, function() {
     console.log("Running callback");
+    emitEvent(subInd, subIos, subRoom, 'clear');
     subIos.sockets.emit('clear', {dur:subDelay});
     gameRooms[mRI].clearing=true;
     setTimeout(function(){
-      sendGameState(subSock, subIos, subRoom, true);
+      sendGameState(subInd, subIos, subRoom, true);
       gameRooms[mRI].clearing=false;
     }, subDelay);
   });

@@ -1,26 +1,25 @@
-var Animation = (function (canvas, color, elementID, isSelf) {
+var Animation = (function (canvas, color, isSelf) {      
     var context = canvas.getContext('2d'),
-        durations = {slap: 500,
+        durations = {slap: 400,
                      flip: 650,
-                     clear: 500
+                     clear: 1100
                     },
         myColor = color,
-        myElement = document.getElementById(elementID),
-        animationFlip=isSelf,
         myAnimations = [],
         removeQueue = [],
-        animationOffset = '50%',
+        animationFlip=isSelf,
+        flipDir = 1, 
+        animationOffset = '100%',
         x = canvas.width * 0.5,
-        y = canvas.height * 0.25,
-        flipDir = 1,
-        cardDims = {width:50, height:70};
+        y = canvas.height * 0.1,
+        scale = 1,
+        cardDims = {width:50*scale, height:70*scale};        
         
         if (animationFlip) {
-          animationOffset = '-150%';
-          y = canvas.height * 0.75;
+          animationOffset = '-200%';
           flipDir = -1;
         }
-        document.getElementById(elementID).style.top = animationOffset;
+        canvas.style.top = animationOffset; 
 
     var _drawSlap = function(timestamp, index) {
         //console.log("In drawSlap, my event:",myAnimations[index]);
@@ -28,18 +27,17 @@ var Animation = (function (canvas, color, elementID, isSelf) {
             progress = timestamp - myStart,
             percentThrough = progress / durations.slap;
         //console.log("timestamp:",timestamp,"myStart:",myStart, "percent:",percentThrough);
-        if (progress < 0) {
-          context.rect(4, y, (2*x)-8, (y/2)-4);
-          return; //Issues with first frame sending timestamp too far in the past
-        }
         if (progress >= durations.slap) {
             //console.log("Added",index,"to removeQueue");
             removeQueue.push(index);
             return;
         }
         
-        var radius = (0.75) * x * percentThrough,
+        var radius = (0.5) * x * percentThrough,
             opacity = 1 - (0.8)*percentThrough;
+
+        if (animationFlip) y=canvas.height;
+        else y = 0;
         
         context.save();
         
@@ -47,7 +45,7 @@ var Animation = (function (canvas, color, elementID, isSelf) {
         
         context.beginPath();
         context.arc(x, y, radius, 0, Math.PI, animationFlip);
-        context.lineWidth = 10 * percentThrough;
+        context.lineWidth = 20 * percentThrough;
         context.strokeStyle = myColor;
         context.stroke();
         context.closePath();
@@ -61,18 +59,17 @@ var Animation = (function (canvas, color, elementID, isSelf) {
             progress = timestamp - myStart,
             percentThrough = progress / durations.flip;
         //console.log("timestamp:",timestamp,"myStart:",myStart, "percent:",percentThrough);
-        if (progress < 0) {
-          return; //Issues with first frame sending timestamp too far in the past
-        }
         if (progress >= durations.flip) {
             //console.log("Added",index,"to removeQueue");
             removeQueue.push(index);
             return;
         }
         
-        var moveDist = (0.75) * canvas.height * percentThrough * flipDir,
-            opacity = 1 - (0.9)*percentThrough;
+        var moveDist = (0.35) * canvas.height * percentThrough * flipDir,
+            opacity = 1 - percentThrough;
 
+        if (animationFlip) y = canvas.height*0.3;
+        else y = 0;
         context.save();
         
         context.globalAlpha = opacity;
@@ -80,7 +77,37 @@ var Animation = (function (canvas, color, elementID, isSelf) {
         _rCorners(x-(cardDims.width/2), y+moveDist, cardDims.width, cardDims.height, 5, myColor, true);
         
         context.restore();
-      
+    };
+
+    var _drawClear = function(timestamp, index) {
+       var myStart = myAnimations[index].start,
+            progress = timestamp - myStart,
+            percentThrough = progress / durations.clear;
+        if (progress >= durations.clear) {
+            //console.log("Added",index,"to removeQueue");
+            removeQueue.push(index);
+            return;
+        }
+
+        var radius = (0.8) * x * (1-percentThrough),
+            opacity = 0.2 + (0.8) * percentThrough;
+
+        if (animationFlip) y=canvas.height;
+        else y = 0;
+        
+        context.save();
+        
+        context.globalAlpha = opacity;
+        
+        context.beginPath();
+        context.arc(x, y, radius, 0, Math.PI, animationFlip);
+        context.lineWidth = 20 * percentThrough;
+        context.strokeStyle = myColor;
+        context.stroke();
+        context.closePath();
+        
+        context.restore();
+
     };
     
     var _rCorners = function(_x, _y, _width, _height, _radius, _color, stroke) {
@@ -129,6 +156,8 @@ var Animation = (function (canvas, color, elementID, isSelf) {
             _drawSlap(timestamp, z); break;
           case ('flip'):
             _drawFlip(timestamp, z); break;
+          case ('clear'):
+            _drawClear(timestamp, z); break;
         }
       }
       if (removeQueue.length>0) _handleQueue();

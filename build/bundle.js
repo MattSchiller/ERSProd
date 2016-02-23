@@ -143,7 +143,7 @@
 	    return z;
 	  },
 	  render: function render() {
-	    return React.createElement('div', null, React.createElement('br', null), React.createElement(PlayersBox, { players: this._transformPlayers(), curr: this.props.gameInfo.curr }), React.createElement('br', null), React.createElement(CardBox, { cards: this.props.gameInfo.penalty, players: this.props.gameInfo.players, box: 'penalty' }), React.createElement(CardBox, { cards: this.props.gameInfo.center, players: this.props.gameInfo.players, box: 'center' }), React.createElement(ReadyButton, { myPlayerID: this.props.gameInfo.myPlayerID, roomID: this.props.gameInfo.roomID }), React.createElement(SitDownButton, { myPlayerID: this.props.gameInfo.myPlayerID, roomID: this.props.gameInfo.roomID }), React.createElement(SelfBox, { player: this.props.gameInfo.players[this._findMyIndex()], curr: this.props.gameInfo.curr, roomID: this.props.gameInfo.roomID, numPlayers: this.props.gameInfo.players.length, max: this.props.max }));
+	    return React.createElement('div', null, React.createElement('br', null), React.createElement(PlayersBox, { players: this._transformPlayers(), curr: this.props.gameInfo.curr }), React.createElement('br', null), React.createElement('br', null), React.createElement(CardBox, { cards: this.props.gameInfo.penalty, players: this.props.gameInfo.players, box: 'penalty' }), React.createElement(CardBox, { cards: this.props.gameInfo.center, players: this.props.gameInfo.players, box: 'center' }), React.createElement(ReadyButton, { myPlayerID: this.props.gameInfo.myPlayerID, roomID: this.props.gameInfo.roomID }), React.createElement(SitDownButton, { myPlayerID: this.props.gameInfo.myPlayerID, roomID: this.props.gameInfo.roomID }), React.createElement(SelfBox, { player: this.props.gameInfo.players[this._findMyIndex()], curr: this.props.gameInfo.curr, roomID: this.props.gameInfo.roomID, numPlayers: this.props.gameInfo.players.length, max: this.props.max }));
 	  }
 	});
 	var PlayersBox = React.createClass({
@@ -177,16 +177,15 @@
 	      amICurr = " blinking";
 	      console.log("Added curr status to:", this.props.player.name);
 	    }
-	    return React.createElement('div', { className: this.props.className + ' singlePlayer mainTheme' + amICurr, id: this.myID }, React.createElement(EventAnimation, { pIndex: this.props.player.index, color: spanStyle.color, isSelf: this.props.isSelf }), React.createElement('span', { style: spanStyle }, this.props.player.name), React.createElement('br', null), ' ', React.createElement('span', null, React.createElement('b', null, 'Cards: ')), React.createElement('span', { style: { fontSize: "15pt" } }, React.createElement('b', null, this.props.player.cards)));
+	    return React.createElement('div', { className: this.props.className + ' singlePlayer mainTheme' + amICurr, id: this.myID }, React.createElement(EventAnimation, { pIndex: this.props.player.index, color: spanStyle.color, isSelf: this.props.isSelf, myID: 'plyr' + this.props.player.index }), React.createElement('span', { style: spanStyle }, this.props.player.name), React.createElement('br', null), ' ', React.createElement('span', null, React.createElement('b', null, 'Cards: ')), React.createElement('span', { style: { fontSize: "15pt" } }, React.createElement('b', null, this.props.player.cards)));
 	  }
 	});
 	var EventAnimation = React.createClass({
 	  displayName: 'EventAnimation',
 
 	  componentDidMount: function componentDidMount() {
-	    var elementID = '#' + this.props.pIndex,
-	        myCanvas = document.getElementById(elementID);
-	    this.myAnimations = new Animation(myCanvas, this.props.color, elementID, this.props.isSelf); //, , this.props.type, this.props.removal, this.props.eventID, elementID, this.props.isSelf);
+	    var myCanvas = document.getElementById(this.props.myID);
+	    this.myAnimations = new Animation(myCanvas, this.props.color, this.props.isSelf); //, , this.props.type, this.props.removal, this.props.eventID, elementID, this.props.isSelf);
 	    socket.on('event', this._initEvent);
 	    console.log("Drawing animation, type:", this.props.type, "eventID: ", this.props.eventID);
 	  },
@@ -200,7 +199,7 @@
 	    }
 	  },
 	  render: function render() {
-	    return React.createElement('canvas', { id: '#' + this.props.pIndex, className: 'animation' });
+	    return React.createElement('canvas', { id: this.props.myID, className: 'animation', width: 200, height: 100 });
 	  }
 	});
 
@@ -750,7 +749,7 @@
 	      if (this.props.rules.straight === false) straightClass = ruleOff;
 	      if (this.props.rules.bottomStack === false) bottomStackClass = ruleOff;
 	      return (//onClick={this.props.hide} onBlur={this.props.hide}
-	        React.createElement('div', { className: 'rulesModal mainTheme' }, React.createElement('span', { style: { fontSize: "17pt" } }, React.createElement('u', null, React.createElement('b', null, 'Rules of Egyptian Ratscrew:'))), React.createElement('ul', null, React.createElement('li', null, 'The point of the game is to get all the cards.'), ' ', React.createElement('br', null), ' ', React.createElement('li', null, 'Players have two actions: ', React.createElement('ul', null, React.createElement('li', null, 'On their turn, flip a card: ', React.createElement('span', { className: 'controls' }, '[TAB]')), ' ', React.createElement('li', null, 'At any time, slap: ', React.createElement('span', { className: 'controls' }, '[SPACEBAR]')), ' '), ' ', React.createElement('br', null)), React.createElement('li', null, 'Starting with the first player to sit down, players flip the top card off their pile and place it face-up in the middle. If the card played is a number card, the next player puts down a card, too. This continues around the table until somebody puts down a ', React.createElement('span', { className: 'controls' }, 'face card (J, Q, K, or A)'), '.'), ' ', React.createElement('br', null), ' ', React.createElement('li', null, 'When a face card (Aces are face cards!) is played, the next person in the sequence must flip another face card in the alloted number of chances in order for play to continue.'), ' ', React.createElement('br', null), ' ', React.createElement('li', null, ' ', React.createElement('span', { className: 'controls' }, ' Chances provided:', React.createElement('ul', null, React.createElement('li', null, 'J -> 1'), React.createElement('li', null, 'Q -> 2'), React.createElement('li', null, 'K -> 3'), React.createElement('li', null, 'A -> 4'), ' '), ' ')), ' ', React.createElement('br', null), ' ', React.createElement('li', null, 'If the next person in the sequence does NOT play a face card within their allotted number of chances, the person who played the last face card wins the round and all the cards in the center go to them. This pile winner begins the next round of play.'), ' ', React.createElement('br', null), ' ', React.createElement('li', null, 'The only thing that overrides the face card rule is the slap rule. If a slap pattern is present, no matter the status of the pile, the first person to slap is the winner of that round.'), ' ', React.createElement('br', null), ' ', React.createElement('li', null, 'If you slap and there is nothing to slap on, you lose two cards to the penalty pile (that the next pile winner will collect).'), ' '), ' ', React.createElement('p', null, ' ', React.createElement('span', { className: 'controls' }, ' ', React.createElement('u', null, 'Slappable Patterns:'), ' ', React.createElement('em', null, '(click to toggle each rule on/off)'), ' '), ' '), ' ', React.createElement('ul', null, React.createElement('hr', null), React.createElement('li', null, ' ', React.createElement(RuleExample, { className: doublesClass, type: 'doubles', title: 'Doubles', caption: ' any 2 cards of the same rank:', cardArray: doubles })), ' ', React.createElement('hr', null), React.createElement('li', null, React.createElement(RuleExample, { className: sandwichClass, type: 'sandwich', title: 'Sandwich', caption: ' 2 cards of the same rank with 1 card between them:', cardArray: sandwich })), React.createElement('hr', null), React.createElement('li', null, React.createElement(RuleExample, { className: flushClass, type: 'flush', title: 'Flush', caption: ' 3 cards in a row of the same suit:', cardArray: flush })), React.createElement('hr', null), React.createElement('li', null, React.createElement(RuleExample, { className: straightClass, type: 'straight', title: 'Straight', caption: ' 3 cards in a row of ascending or descending ranks, no \'Ace wrap-a-rounds\':', cardArray: straight })), React.createElement('hr', null), React.createElement('li', null, React.createElement(RuleExample, { className: bottomStackClass, type: 'bottomStack', title: 'Bottom-stack', caption: ' a \'super sandwich\' with the top card and the bottom card of the whole stack of the same rank:', cardArray: bottomstack }))))
+	        React.createElement('div', { className: 'rulesModal mainTheme' }, React.createElement('span', { style: { fontSize: "17pt" } }, React.createElement('u', null, React.createElement('b', null, 'Rules of Egyptian Ratscrew:'))), React.createElement('ul', null, React.createElement('li', null, 'The point of the game is to get all the cards.'), ' ', React.createElement('br', null), ' ', React.createElement('li', null, 'Players have two actions: ', React.createElement('ul', null, React.createElement('li', null, 'On their turn, flip a card: ', React.createElement('span', { className: 'controls' }, '[TAB]')), ' ', React.createElement('li', null, 'At any time, slap: ', React.createElement('span', { className: 'controls' }, '[SPACEBAR]')), ' '), ' ', React.createElement('br', null)), React.createElement('li', null, 'Starting with the first player to sit down, players flip the top card off their pile and place it face-up in the middle. If the card played is a number card, the next player puts down a card, too. This continues around the table until somebody puts down a ', React.createElement('span', { className: 'controls' }, 'face card (J, Q, K, or A)'), '.'), ' ', React.createElement('br', null), ' ', React.createElement('li', null, 'When a face card (Aces are face cards!) is played, the next person in the sequence must flip another face card in the alloted number of chances in order for play to continue.'), ' ', React.createElement('br', null), ' ', React.createElement('li', null, ' ', React.createElement('span', { className: 'controls' }, ' Chances provided:'), ' ', React.createElement('ul', null, React.createElement('li', null, 'J -> 1'), React.createElement('li', null, 'Q -> 2'), React.createElement('li', null, 'K -> 3'), React.createElement('li', null, 'A -> 4'), ' ')), ' ', React.createElement('br', null), ' ', React.createElement('li', null, 'If the next person in the sequence does NOT play a face card within their allotted number of chances, the person who played the last face card wins the round and all the cards in the center go to them. This pile winner begins the next round of play.'), ' ', React.createElement('br', null), ' ', React.createElement('li', null, 'The only thing that overrides the face card rule is the slap rule. If a slap pattern is present, no matter the status of the pile, the first person to slap is the winner of that round.'), ' ', React.createElement('br', null), ' ', React.createElement('li', null, 'If you slap and there is nothing to slap on, you lose two cards to the penalty pile (that the next pile winner will collect).'), ' '), ' ', React.createElement('p', null, ' ', React.createElement('span', { className: 'controls' }, ' ', React.createElement('u', null, 'Slappable Patterns:'), ' ', React.createElement('em', null, '(click to toggle each rule on/off)'), ' '), ' '), ' ', React.createElement('ul', null, React.createElement('hr', null), React.createElement('li', null, ' ', React.createElement(RuleExample, { className: doublesClass, type: 'doubles', title: 'Doubles', caption: ' any 2 cards of the same rank:', cardArray: doubles })), ' ', React.createElement('hr', null), React.createElement('li', null, React.createElement(RuleExample, { className: sandwichClass, type: 'sandwich', title: 'Sandwich', caption: ' 2 cards of the same rank with 1 card between them:', cardArray: sandwich })), React.createElement('hr', null), React.createElement('li', null, React.createElement(RuleExample, { className: flushClass, type: 'flush', title: 'Flush', caption: ' 3 cards in a row of the same suit:', cardArray: flush })), React.createElement('hr', null), React.createElement('li', null, React.createElement(RuleExample, { className: straightClass, type: 'straight', title: 'Straight', caption: ' 3 cards in a row of ascending or descending ranks, no \'Ace wrap-a-rounds\':', cardArray: straight })), React.createElement('hr', null), React.createElement('li', null, React.createElement(RuleExample, { className: bottomStackClass, type: 'bottomStack', title: 'Bottom-stack', caption: ' a \'super sandwich\' with the top card and the bottom card of the whole stack of the same rank:', cardArray: bottomstack }))))
 	      );
 	    } else {
 	      return React.createElement('div', null);
@@ -953,16 +952,23 @@
 	        context.clearRect(0, 0, canvas.width, canvas.height);
 
 	        if (fading) {
-	            color = fadeColor;
-	            if (fadeReverse) opacity = 1 - percentThrough;else opacity = percentThrough;
-
-	            context.globalAlpha = opacity;
+	            if (!fadeReverse) {
+	                opacity = percentThrough;
+	                context.globalAlpha = opacity;
+	                context.save();
+	                context.fillStyle = "#F1E9D2";
+	                context.fillRect(0, 0, canvas.width, canvas.height);
+	                context.restore();
+	                if (suit == 'C' || suit == 'S') color = 'black';else color = 'red';
+	            } else {
+	                color = fadeColor;
+	                opacity = 1 - percentThrough;
+	                context.globalAlpha = opacity;
+	            }
 	        } else {
 	            if (!fadeReverse) {
 	                //Just a regular card to display now
-	                if (suit == 'C' || suit == 'S') color = 'black';else color = 'red';
 	                opacity = 1;
-
 	                context.save();
 	                context.globalAlpha = opacity;
 	                context.fillStyle = "#F1E9D2";
@@ -1183,152 +1189,179 @@
 
 	'use strict';
 
-	var Animation = function Animation(canvas, color, elementID, isSelf) {
-	  var context = canvas.getContext('2d'),
-	      durations = { slap: 500,
-	    flip: 650,
-	    clear: 500
-	  },
-	      myColor = color,
-	      myElement = document.getElementById(elementID),
-	      animationFlip = isSelf,
-	      myAnimations = [],
-	      removeQueue = [],
-	      animationOffset = '50%',
-	      x = canvas.width * 0.5,
-	      y = canvas.height * 0.25,
-	      flipDir = 1,
-	      cardDims = { width: 50, height: 70 };
+	var Animation = function Animation(canvas, color, isSelf) {
+	    var context = canvas.getContext('2d'),
+	        durations = { slap: 400,
+	        flip: 650,
+	        clear: 1100
+	    },
+	        myColor = color,
+	        myAnimations = [],
+	        removeQueue = [],
+	        animationFlip = isSelf,
+	        flipDir = 1,
+	        animationOffset = '100%',
+	        x = canvas.width * 0.5,
+	        y = canvas.height * 0.1,
+	        scale = 1,
+	        cardDims = { width: 50 * scale, height: 70 * scale };
 
-	  if (animationFlip) {
-	    animationOffset = '-150%';
-	    y = canvas.height * 0.75;
-	    flipDir = -1;
-	  }
-	  document.getElementById(elementID).style.top = animationOffset;
-
-	  var _drawSlap = function _drawSlap(timestamp, index) {
-	    //console.log("In drawSlap, my event:",myAnimations[index]);
-	    var myStart = myAnimations[index].start,
-	        progress = timestamp - myStart,
-	        percentThrough = progress / durations.slap;
-	    //console.log("timestamp:",timestamp,"myStart:",myStart, "percent:",percentThrough);
-	    if (progress < 0) {
-	      context.rect(4, y, 2 * x - 8, y / 2 - 4);
-	      return; //Issues with first frame sending timestamp too far in the past
+	    if (animationFlip) {
+	        animationOffset = '-200%';
+	        flipDir = -1;
 	    }
-	    if (progress >= durations.slap) {
-	      //console.log("Added",index,"to removeQueue");
-	      removeQueue.push(index);
-	      return;
-	    }
+	    canvas.style.top = animationOffset;
 
-	    var radius = 0.75 * x * percentThrough,
-	        opacity = 1 - 0.8 * percentThrough;
+	    var _drawSlap = function _drawSlap(timestamp, index) {
+	        //console.log("In drawSlap, my event:",myAnimations[index]);
+	        var myStart = myAnimations[index].start,
+	            progress = timestamp - myStart,
+	            percentThrough = progress / durations.slap;
+	        //console.log("timestamp:",timestamp,"myStart:",myStart, "percent:",percentThrough);
+	        if (progress >= durations.slap) {
+	            //console.log("Added",index,"to removeQueue");
+	            removeQueue.push(index);
+	            return;
+	        }
 
-	    context.save();
+	        var radius = 0.5 * x * percentThrough,
+	            opacity = 1 - 0.8 * percentThrough;
 
-	    context.globalAlpha = opacity;
+	        if (animationFlip) y = canvas.height;else y = 0;
 
-	    context.beginPath();
-	    context.arc(x, y, radius, 0, Math.PI, animationFlip);
-	    context.lineWidth = 10 * percentThrough;
-	    context.strokeStyle = myColor;
-	    context.stroke();
-	    context.closePath();
+	        context.save();
 
-	    context.restore();
-	  };
+	        context.globalAlpha = opacity;
 
-	  var _drawFlip = function _drawFlip(timestamp, index) {
-	    //console.log("In drawSlap, my event:",myAnimations[index]);
-	    var myStart = myAnimations[index].start,
-	        progress = timestamp - myStart,
-	        percentThrough = progress / durations.flip;
-	    //console.log("timestamp:",timestamp,"myStart:",myStart, "percent:",percentThrough);
-	    if (progress < 0) {
-	      return; //Issues with first frame sending timestamp too far in the past
-	    }
-	    if (progress >= durations.flip) {
-	      //console.log("Added",index,"to removeQueue");
-	      removeQueue.push(index);
-	      return;
-	    }
+	        context.beginPath();
+	        context.arc(x, y, radius, 0, Math.PI, animationFlip);
+	        context.lineWidth = 20 * percentThrough;
+	        context.strokeStyle = myColor;
+	        context.stroke();
+	        context.closePath();
 
-	    var moveDist = 0.75 * canvas.height * percentThrough * flipDir,
-	        opacity = 1 - 0.9 * percentThrough;
+	        context.restore();
+	    };
 
-	    context.save();
+	    var _drawFlip = function _drawFlip(timestamp, index) {
+	        //console.log("In drawSlap, my event:",myAnimations[index]);
+	        var myStart = myAnimations[index].start,
+	            progress = timestamp - myStart,
+	            percentThrough = progress / durations.flip;
+	        //console.log("timestamp:",timestamp,"myStart:",myStart, "percent:",percentThrough);
+	        if (progress >= durations.flip) {
+	            //console.log("Added",index,"to removeQueue");
+	            removeQueue.push(index);
+	            return;
+	        }
 
-	    context.globalAlpha = opacity;
-	    context.fillStyle = myColor;
-	    _rCorners(x - cardDims.width / 2, y + moveDist, cardDims.width, cardDims.height, 5, myColor, true);
+	        var moveDist = 0.35 * canvas.height * percentThrough * flipDir,
+	            opacity = 1 - percentThrough;
 
-	    context.restore();
-	  };
+	        if (animationFlip) y = canvas.height * 0.3;else y = 0;
+	        context.save();
 
-	  var _rCorners = function _rCorners(_x, _y, _width, _height, _radius, _color, stroke) {
-	    if (typeof stroke == 'undefined') {
-	      stroke = true;
-	    }
-	    //_radius = 5;
-	    context.beginPath();
-	    context.moveTo(_x + _radius, _y);
-	    context.lineTo(_x + _width - _radius, _y);
-	    context.quadraticCurveTo(_x + _width, _y, _x + _width, _y + _radius);
-	    context.lineTo(_x + _width, _y + _height - _radius);
-	    context.quadraticCurveTo(_x + _width, _y + _height, _x + _width - _radius, _y + _height);
-	    context.lineTo(_x + _radius, _y + _height);
-	    context.quadraticCurveTo(_x, _y + _height, _x, _y + _height - _radius);
-	    context.lineTo(_x, _y + _radius);
-	    context.quadraticCurveTo(_x, _y, _x + _radius, _y);
-	    context.closePath();
-	    context.fill();
-	    if (stroke) {
-	      context.stroke();
-	    }
-	  };
+	        context.globalAlpha = opacity;
+	        context.fillStyle = myColor;
+	        _rCorners(x - cardDims.width / 2, y + moveDist, cardDims.width, cardDims.height, 5, myColor, true);
 
-	  var add = function add(type) {
-	    //console.log("type:",type,"perf:",window.performance.now());
-	    myAnimations.push({ type: type, start: window.performance.now() });
-	    //console.log("Just added, myAnimations:",myAnimations);
-	    window.requestAnimationFrame(_draw);
-	  };
+	        context.restore();
+	    };
 
-	  var _handleQueue = function _handleQueue() {
-	    //Removes elements in reverse order so that the assigned indeces don't change during manipulation
-	    var removeIndex;
-	    while (removeQueue.length) {
-	      removeIndex = removeQueue.pop();
-	      myAnimations.splice(removeIndex, 1);
-	    }
-	  };
+	    var _drawClear = function _drawClear(timestamp, index) {
+	        var myStart = myAnimations[index].start,
+	            progress = timestamp - myStart,
+	            percentThrough = progress / durations.clear;
+	        console.log("clear: timestamp:", timestamp, "myStart:", myStart, "percent:", percentThrough);
+	        if (progress >= durations.clear) {
+	            //console.log("Added",index,"to removeQueue");
+	            removeQueue.push(index);
+	            return;
+	        }
 
-	  var _draw = function _draw(timestamp) {
-	    //console.log("In draw, animations:",myAnimations);
-	    _clear();
-	    for (var z = 0; z < myAnimations.length; z++) {
-	      switch (myAnimations[z].type) {
-	        case 'slap':
-	          _drawSlap(timestamp, z);break;
-	        case 'flip':
-	          _drawFlip(timestamp, z);break;
-	      }
-	    }
-	    if (removeQueue.length > 0) _handleQueue();
-	    if (myAnimations.length > 0) window.requestAnimationFrame(_draw);else _clear();
-	  };
+	        var radius = 0.8 * x * (1 - percentThrough),
+	            opacity = 0.2 + 0.8 * percentThrough;
 
-	  var _clear = function _clear() {
-	    context.clearRect(0, 0, canvas.width, canvas.height);
-	  };
+	        if (animationFlip) y = canvas.height;else y = 0;
 
-	  //console.log("In animations");
+	        context.save();
 
-	  return {
-	    add: add
-	  };
+	        context.globalAlpha = opacity;
+
+	        context.beginPath();
+	        context.arc(x, y, radius, 0, Math.PI, animationFlip);
+	        context.lineWidth = 20 * percentThrough;
+	        context.strokeStyle = myColor;
+	        context.stroke();
+	        context.closePath();
+
+	        context.restore();
+	    };
+
+	    var _rCorners = function _rCorners(_x, _y, _width, _height, _radius, _color, stroke) {
+	        if (typeof stroke == 'undefined') {
+	            stroke = true;
+	        }
+	        //_radius = 5;
+	        context.beginPath();
+	        context.moveTo(_x + _radius, _y);
+	        context.lineTo(_x + _width - _radius, _y);
+	        context.quadraticCurveTo(_x + _width, _y, _x + _width, _y + _radius);
+	        context.lineTo(_x + _width, _y + _height - _radius);
+	        context.quadraticCurveTo(_x + _width, _y + _height, _x + _width - _radius, _y + _height);
+	        context.lineTo(_x + _radius, _y + _height);
+	        context.quadraticCurveTo(_x, _y + _height, _x, _y + _height - _radius);
+	        context.lineTo(_x, _y + _radius);
+	        context.quadraticCurveTo(_x, _y, _x + _radius, _y);
+	        context.closePath();
+	        context.fill();
+	        if (stroke) {
+	            context.stroke();
+	        }
+	    };
+
+	    var add = function add(type) {
+	        //console.log("type:",type,"perf:",window.performance.now());
+	        myAnimations.push({ type: type, start: window.performance.now() });
+	        //console.log("Just added, myAnimations:",myAnimations);
+	        window.requestAnimationFrame(_draw);
+	    };
+
+	    var _handleQueue = function _handleQueue() {
+	        //Removes elements in reverse order so that the assigned indeces don't change during manipulation
+	        var removeIndex;
+	        while (removeQueue.length) {
+	            removeIndex = removeQueue.pop();
+	            myAnimations.splice(removeIndex, 1);
+	        }
+	    };
+
+	    var _draw = function _draw(timestamp) {
+	        //console.log("In draw, animations:",myAnimations);
+	        _clear();
+	        for (var z = 0; z < myAnimations.length; z++) {
+	            switch (myAnimations[z].type) {
+	                case 'slap':
+	                    _drawSlap(timestamp, z);break;
+	                case 'flip':
+	                    _drawFlip(timestamp, z);break;
+	                case 'clear':
+	                    _drawClear(timestamp, z);break;
+	            }
+	        }
+	        if (removeQueue.length > 0) _handleQueue();
+	        if (myAnimations.length > 0) window.requestAnimationFrame(_draw);else _clear();
+	    };
+
+	    var _clear = function _clear() {
+	        context.clearRect(0, 0, canvas.width, canvas.height);
+	    };
+
+	    //console.log("In animations");
+
+	    return {
+	        add: add
+	    };
 	};
 
 	module.exports = Animation;
