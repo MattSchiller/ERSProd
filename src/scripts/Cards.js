@@ -217,6 +217,8 @@ var CardCanvas = (function (canvas) {
         } else {
           if (!fadeReverse){//Just a regular card to display now
             opacity = 1;
+            if (suit=='C' || suit=='S') color = 'black';
+            else color = 'red';
             context.save();
             context.globalAlpha = opacity;
             context.fillStyle= "#F1E9D2";
