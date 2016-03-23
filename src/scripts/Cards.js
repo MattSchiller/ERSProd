@@ -276,9 +276,9 @@ var CardCanvas = (function (canvas) {
     
     var eraseCard = function(duration){
       fadeReverse=true;
+      fading=true;
       dur = duration;
       startTime=window.performance.now();
-      fading=true;
       window.requestAnimationFrame(_draw)
     }
     return {

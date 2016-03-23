@@ -969,6 +969,7 @@
 	            if (!fadeReverse) {
 	                //Just a regular card to display now
 	                opacity = 1;
+	                if (suit == 'C' || suit == 'S') color = 'black';else color = 'red';
 	                context.save();
 	                context.globalAlpha = opacity;
 	                context.fillStyle = "#F1E9D2";
@@ -1023,9 +1024,9 @@
 
 	    var eraseCard = function eraseCard(duration) {
 	        fadeReverse = true;
+	        fading = true;
 	        dur = duration;
 	        startTime = window.performance.now();
-	        fading = true;
 	        window.requestAnimationFrame(_draw);
 	    };
 	    return {
