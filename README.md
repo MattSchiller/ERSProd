@@ -4,7 +4,7 @@ Welcome to E-Ratscrew, the future of slappable card games! Ah, don't mind the ov
 The rules of the game (Egyptian Ratscrew) are listed in the client, but in brief, it's a game of flipping cards from your deck and signaling a 'slap' if you recognize a specific pattern in the flipped cards (doubles, for instance). There's more to it, but let's start talking technical.
 
 ##Module Synopsis
-###*src/scripts/*Ratscrew.js
+#####*src/scripts/*Ratscrew.js
 The front-end is written with React, which was a dream for handling the variable number of players, center cards, and overall game state. Everything except the starfield background image is created with canvas elements, which was another great learning experience (drawing the cards & suits, the flip/slap animations, and the fading animations).
 
 #####RSServer.js
