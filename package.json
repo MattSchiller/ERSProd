@@ -4,9 +4,10 @@
   "description": "",
   "main": "RSServer.js",
   "scripts": {
+    "start": "node RSServer.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
+  "author": "Matt Schiller",
   "license": "ISC",
   "dependencies": {
     "babel-cli": "^6.5.1",
@@ -18,15 +19,6 @@
     "react-dom": "^0.14.7",
     "socket.io": "^1.4.4",
     "webpack": "^1.12.13"
-  },
-  "devDependencies": {
-    "gulp": "^3.9.1",
-    "gulp-autoprefixer": "^3.1.0",
-    "gulp-babel": "^6.1.2",
-    "gulp-concat": "^2.6.0",
-    "gulp-minify-css": "^1.2.3",
-    "gulp-react": "^3.1.0",
-    "socket.io-client": "^1.4.5"
   },
   "babel": {
     "presets": [
