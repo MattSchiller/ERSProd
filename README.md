@@ -10,7 +10,7 @@ The front-end is written with React, which was a dream for handling the variable
 #####RSServer.js
 The server is built without Express because I wanted to understand the 'nitty gritty' of file-serving. The server also handles all socket.IO communications to/from the clients, and capably deals with rooms for several game tables all at once. Node/npm is of course used to handle the external libraries, of which there are delightfully few (Socket.IO, Webpack, and Babel mostly).
 
-#####src_server/RatscrewLogic.js
+#####*src_server/*RatscrewLogic.js
 For each game room, there is a single instance of the gameLogic.js instantiated. This library keeps track of things like whose turn it is, what cards everyone has, and whether game actions that users communicate to the server are valid game moves. It also handles the AI players that a user may request, spawning an instance of the AI.js module, which connects, reacts, and communicates with the server as though it were a normal player.
 
 #####*src_server/*AI.js
