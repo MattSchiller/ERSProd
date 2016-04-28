@@ -1,4 +1,4 @@
-var Animation = (function (canvas, color, isSelf) {      
+var Animation = (function (canvas, color, isSelf) {
     var context = canvas.getContext('2d'),
         durations = {slap: 400,
                      flip: 650,
@@ -8,18 +8,18 @@ var Animation = (function (canvas, color, isSelf) {
         myAnimations = [],
         removeQueue = [],
         animationFlip=isSelf,
-        flipDir = 1, 
+        flipDir = 1,
         animationOffset = '100%',
         x = canvas.width * 0.5,
         y = canvas.height * 0.1,
         scale = 1,
-        cardDims = {width:50*scale, height:70*scale};        
+        cardDims = {width:50*scale, height:70*scale};
         
         if (animationFlip) {
           animationOffset = '-200%';
           flipDir = -1;
         }
-        canvas.style.top = animationOffset; 
+        canvas.style.top = animationOffset;
 
     var _drawSlap = function(timestamp, index) {
         //console.log("In drawSlap, my event:",myAnimations[index]);
@@ -35,7 +35,8 @@ var Animation = (function (canvas, color, isSelf) {
         
         var radius = (0.5) * x * percentThrough,
             opacity = 1 - (0.8)*percentThrough;
-
+        if (radius < 0) return;
+        
         if (animationFlip) y=canvas.height;
         else y = 0;
         

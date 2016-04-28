@@ -137,7 +137,7 @@ h1 {
   /*top:-150%;*/
   left:50%;
   transform: translate(-50%, 0%);
-  z-index: 100;
+  z-index: 10;
 }
 
 .sitDown {
@@ -194,10 +194,11 @@ h1 {
 *:-ms-input-placeholder {/* IE 10+ */color: black;}
 
 .readyButton {
+  position: relative;
   width: 15%;
   height: 10%;
   max-height: 45px;
-  z-index: 100;
+  z-index: 120;
   margin: 0 auto;
 }
 

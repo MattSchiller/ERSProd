@@ -969,6 +969,7 @@
 	            if (!fadeReverse) {
 	                //Just a regular card to display now
 	                opacity = 1;
+	                if (suit == 'C' || suit == 'S') color = 'black';else color = 'red';
 	                context.save();
 	                context.globalAlpha = opacity;
 	                context.fillStyle = "#F1E9D2";
@@ -1023,9 +1024,9 @@
 
 	    var eraseCard = function eraseCard(duration) {
 	        fadeReverse = true;
+	        fading = true;
 	        dur = duration;
 	        startTime = window.performance.now();
-	        fading = true;
 	        window.requestAnimationFrame(_draw);
 	    };
 	    return {
@@ -1226,6 +1227,7 @@
 
 	        var radius = 0.5 * x * percentThrough,
 	            opacity = 1 - 0.8 * percentThrough;
+	        if (radius < 0) return;
 
 	        if (animationFlip) y = canvas.height;else y = 0;
 
@@ -1272,7 +1274,6 @@
 	        var myStart = myAnimations[index].start,
 	            progress = timestamp - myStart,
 	            percentThrough = progress / durations.clear;
-	        console.log("clear: timestamp:", timestamp, "myStart:", myStart, "percent:", percentThrough);
 	        if (progress >= durations.clear) {
 	            //console.log("Added",index,"to removeQueue");
 	            removeQueue.push(index);
