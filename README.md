@@ -1,7 +1,13 @@
 # ERSProd
-Welcome to E-Ratscrew, the future of slappable card games! Ah, don't mind the over-enthusiasm there, I'm just excited at what I've built here.
+Welcome to E-Ratscrew, the future of slappable card games! Ah, don't mind the over-enthusiasm, I'm just excited at what I've built here.
 
 The rules of the game (Egyptian Ratscrew) are listed in the client, but in brief, it's a game of flipping cards from your deck and signaling a 'slap' if you recognize a specific pattern in the flipped cards (doubles, for instance). There's more to it, but let's start talking technical.
+
+![ERS UI](SiteImages/ERS1.png?raw=true "The minimalist and 'spacey' UI for the game")
+
+![ERS Gameplay](SiteImages/ERS2.png?raw=true "The gameplay proceeds as any cardgame might, around the table")
+
+![ERS Animation](SiteImages/ERS3.png?raw=true "When player actions are taken, canvas animations are rendered")
 
 ##Module Synopsis
 #####*src/scripts/*Ratscrew.js
